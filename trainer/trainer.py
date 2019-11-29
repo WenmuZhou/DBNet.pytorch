@@ -148,7 +148,7 @@ class Trainer(BaseTrainer):
         self.logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
             self.epoch_result['epoch'], self.epochs, self.epoch_result['train_loss'], self.epoch_result['time'],
             self.epoch_result['lr']))
-        net_save_path = '{}/PANNet_latest.pth'.format(self.checkpoint_dir)
+        net_save_path = '{}/DBNet_latest.pth'.format(self.checkpoint_dir)
 
         save_best = False
         if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标

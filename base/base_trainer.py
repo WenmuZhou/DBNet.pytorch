@@ -83,10 +83,9 @@ class BaseTrainer:
             try:
                 # add graph
                 dummy_input = torch.zeros(1, self.config['data_loader']['args']['dataset']['img_channel'],
-                                          self.config['data_loader']['args']['dataset']['img_h'],
-                                          self.config['data_loader']['args']['dataset']['img_w']).to(self.device)
-                text = torch.zeros(1, self.model.batch_max_length + 1, dtype=torch.long, device=self.device)
-                self.writer.add_graph(model, (dummy_input, text,))
+                                          self.config['data_loader']['args']['dataset']['input_size'],
+                                          self.config['data_loader']['args']['dataset']['input_size']).to(self.device)
+                self.writer.add_graph(model, dummy_input)
             except:
                 import traceback
                 # self.logger.error(traceback.format_exc())
