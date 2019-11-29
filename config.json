@@ -1,0 +1,78 @@
+{
+    "name": "DBNet",
+    "data_loader": {
+        "type": "ImageDataset",
+        "args": {
+            "dataset": {
+                "train_data_path": [
+                    [
+                        "E:\\zj\\dataset\\icdar2015\\train\\train.txt"
+                    ]
+                ],
+                "train_data_ratio": [
+                    0.5,
+                    0.5
+                ],
+                "val_data_path": "E:\\zj\\dataset\\icdar2015\\test\\test.txt",
+                "input_size": 640,
+                "img_channel": 3,
+                "shrink_ratio": 0.4
+            },
+            "loader": {
+                "validation_split": 0.1,
+                "train_batch_size": 1,
+                "shuffle": true,
+                "pin_memory": false,
+                "num_workers": 6
+            }
+        }
+    },
+    "arch": {
+        "type": "PANModel",
+        "args": {
+            "k": 50,
+            "backbone": "resnet18",
+            "fpem_repeat": 2,
+            "pretrained": true,
+            "segmentation_head": "FPN",
+            "out_channels": 2
+        }
+    },
+    "loss": {
+        "type": "PANLoss",
+        "args": {
+            "alpha": 1,
+            "beta": 10,
+            "ohem_ratio": 3
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 200,
+            "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "seed": 2,
+        "gpus": [
+
+        ],
+        "epochs": 600,
+        "display_interval": 1,
+        "show_images_interval": 50,
+        "resume_checkpoint": "",
+        "finetune_checkpoint": "",
+        "output_dir": "output",
+        "tensorboard": true,
+        "metrics": "hmean"
+    }
+}
