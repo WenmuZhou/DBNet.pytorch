@@ -5,14 +5,13 @@ import os
 import cv2
 import shutil
 import numpy as np
-import traceback
 import time
 from tqdm import tqdm
 import torch
 import torchvision.utils as vutils
 from torchvision import transforms
 from post_processing import decode_py as decode
-from utils import PolynomialLR, runningScore, cal_text_score, cal_kernel_score, cal_recall_precison_f1
+from utils import PolynomialLR, runningScore, cal_text_score, cal_recall_precison_f1
 
 from base import BaseTrainer
 
@@ -95,7 +94,6 @@ class Trainer(BaseTrainer):
                                                   pad_value=1)
                     self.writer.add_image('TRAIN/gt', show_label, self.global_step)
                     # model output
-                    preds[:, :2, :, :] = torch.sigmoid(preds[:, :2, :, :])
                     show_pred = torch.cat([preds[:, 0, :, :], preds[:, 1, :, :], preds[:, 2, :, :]])
                     show_pred = vutils.make_grid(show_pred.unsqueeze(1), nrow=cur_batch_size, normalize=False,
                                                  padding=20,

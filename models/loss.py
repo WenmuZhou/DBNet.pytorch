@@ -45,7 +45,6 @@ class DBLoss(nn.Module):
         selected_masks = (gt_threshold_maps > 0) | (gt_shrink_labels > 0)
         if selected_masks.sum() == 0:
             return torch.tensor(0.0, device=threshold_maps.device, requires_grad=True)
-        threshold_maps = torch.sigmoid(threshold_maps)
         threshold_maps = threshold_maps[selected_masks]
         gt_threshold_maps = gt_threshold_maps[selected_masks]
         loss = self.l1(threshold_maps, gt_threshold_maps)
@@ -54,7 +53,6 @@ class DBLoss(nn.Module):
     def bce_loss(self, input, target, mask):
         if mask.sum() == 0:
             return torch.tensor(0.0, device=input.device, requires_grad=True)
-        input = torch.sigmoid(input)
         target[target <= 0.5] = 0
         target[target > 0.5] = 1
         input = input[mask.bool()]

@@ -69,7 +69,7 @@ def draw_bbox(img_path, result, color=(255, 0, 0), thickness=2):
 
 
 def cal_text_score(texts, gt_texts, running_metric_text):
-    pred_text = torch.sigmoid(texts).data.cpu().numpy()
+    pred_text = texts.data.cpu().numpy()
     pred_text[pred_text <= 0.5] = 0
     pred_text[pred_text > 0.5] = 1
     pred_text = pred_text.astype(np.int32)
@@ -78,20 +78,6 @@ def cal_text_score(texts, gt_texts, running_metric_text):
     running_metric_text.update(gt_text, pred_text)
     score_text, _ = running_metric_text.get_scores()
     return score_text
-
-
-def cal_kernel_score(kernel, gt_kernel, gt_texts, training_masks, running_metric_kernel):
-    mask = (gt_texts * training_masks.float()).data.cpu().numpy()
-    pred_kernel = torch.sigmoid(kernel).data.cpu().numpy()
-    pred_kernel[pred_kernel <= 0.5] = 0
-    pred_kernel[pred_kernel > 0.5] = 1
-    pred_kernel = (pred_kernel * mask).astype(np.int32)
-    gt_kernel = gt_kernel.data.cpu().numpy()
-    gt_kernel = (gt_kernel * mask).astype(np.int32)
-    running_metric_kernel.update(gt_kernel, pred_kernel)
-    score_kernel, _ = running_metric_kernel.get_scores()
-    return score_kernel
-
 
 def order_points_clockwise(pts):
     rect = np.zeros((4, 2), dtype="float32")

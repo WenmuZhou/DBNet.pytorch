@@ -32,7 +32,7 @@ def decode(preds, threshold=0.2, min_area=5):
     if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
         raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
     from .pse import get_points, get_num
-    shrink_map = torch.sigmoid(preds[0, :, :]).detach().cpu().numpy()
+    shrink_map = preds[0, :, :].detach().cpu().numpy()
     score_map = shrink_map.astype(np.float32)
     shrink_map = shrink_map > threshold
 
@@ -65,7 +65,7 @@ def decode(preds, threshold=0.2, min_area=5):
 
 
 def decode_py(preds, threshold=0.7311, min_area=5):
-    shrink_map = torch.sigmoid(preds[0, :, :]).detach().cpu().numpy()
+    shrink_map = preds[0, :, :].detach().cpu().numpy()
     # score_map = shrink_map.astype(np.float32)
     shrink_map = shrink_map > threshold
 

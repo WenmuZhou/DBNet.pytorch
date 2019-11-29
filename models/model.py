@@ -50,12 +50,14 @@ class Model(nn.Module):
     def forward(self, x):
         _, _, H, W = x.size()
         backbone_out = self.backbone(x)
-        segmentation_head_out = self.segmentation_head(backbone_out)
-        y = F.interpolate(segmentation_head_out, size=(H, W), mode='bilinear', align_corners=True)
+        y = self.segmentation_head(backbone_out)
+
         if self.training:
             shrink_maps, threshold_maps = y[:, 0, :, :], y[:, 1, :, :]
             binary_maps = self.db(shrink_maps, threshold_maps).unsqueeze(1)
             y = torch.cat((y, binary_maps), dim=1)
+        y[:, :2, :, :] = torch.sigmoid(y[:, :2, :, :])
+        y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y
 
 
@@ -68,14 +70,15 @@ if __name__ == '__main__':
         'fpem_repeat': 2,  # fpem模块重复的次数
         'pretrained': True,  # backbone 是否使用imagesnet的预训练模型
         'out_channels': 2,
-        "k":50,
+        "k": 50,
         'segmentation_head': 'FPN'  # 分割头，FPN or FPEM_FFM
     }
     model = Model(model_config=model_config).to(device)
     import time
+
     tic = time.time()
     y = model(x)
-    print(time.time()-tic)
+    print(time.time() - tic)
     print(y.shape)
     # print(model)
     # torch.save(model.state_dict(), 'PAN.pth')
