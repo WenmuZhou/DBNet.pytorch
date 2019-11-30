@@ -61,7 +61,7 @@ only train on ICDAR2015 dataset
 
 | Method                   | image size (short size) |learning rate | Precision (%) | Recall (%) | F-measure (%) | FPS |
 |:--------------------------:|:-------:|:--------:|:--------:|:------------:|:---------------:|:-----:|
-| paper(resnet18)  | 736 |0.007 | 86.8 | 78.4 | 82.3 | 48 |
+| DB-ResNet-18(paper)  | 736 |0.007 | 86.8 | 78.4 | 82.3 | 48 |
 | TBD  |736 |1e-3| TBD | TBD | TBD | TBD |
 
 
