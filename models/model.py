@@ -72,7 +72,7 @@ if __name__ == '__main__':
         "k": 50,
         'segmentation_head': 'FPN'  # 分割头，FPN or FPEM_FFM
     }
-    model = Model(model_config=model_config).to(device)
+    model = DBModel(model_config=model_config).to(device)
     import time
 
     tic = time.time()

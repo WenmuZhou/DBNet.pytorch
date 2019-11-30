@@ -20,8 +20,8 @@ class DBLoss(nn.Module):
         assert reduction in ['mean', 'sum'], " reduction must in ['mean','sum']"
         self.alpha = alpha
         self.beta = beta
-        self.bce = nn.BCELoss(reduction=reduction)
-        self.l1 = nn.L1Loss(reduction=reduction)
+        self.bce = nn.BCELoss()
+        self.l1 = nn.L1Loss()
         self.ohem_ratio = ohem_ratio
         self.reduction = reduction
 
@@ -29,17 +29,33 @@ class DBLoss(nn.Module):
         shrink_maps = outputs[:, 0, :, :]
         threshold_maps = outputs[:, 1, :, :]
         binary_maps = outputs[:, 2, :, :]
-
-        # 计算 text loss
-        selected_masks = self.ohem_batch(shrink_maps, gt_shrink_labels)
-        selected_masks = selected_masks.to(outputs.device)
-
-        loss_shrink_map = self.bce_loss(shrink_maps, gt_shrink_labels, selected_masks)
-        loss_binary_map = self.bce_loss(binary_maps, gt_shrink_labels, selected_masks)
-        loss_threshold_map = self.threshold_loss(threshold_maps, gt_threshold_labels, gt_shrink_labels)
-
-        loss_all = loss_shrink_map + self.alpha * loss_binary_map + self.beta * loss_threshold_map
-        return loss_all, loss_shrink_map, loss_binary_map, loss_threshold_map
+        loss_shrink_maps = []
+        loss_binary_maps = []
+        loss_threshold_maps = []
+        for shrink_map, threshold_map, binary_map, gt_shrink_label, gt_threshold_label in zip(shrink_maps, threshold_maps, binary_maps, gt_shrink_labels,
+                                                                                              gt_threshold_labels):
+            loss_shrink_map = self.bce_loss(shrink_map, gt_shrink_label)
+            loss_binary_map = self.bce_loss(binary_map, gt_shrink_label)
+            loss_threshold_map = self.threshold_loss(threshold_map, gt_threshold_label, gt_shrink_label)
+            loss_shrink_maps.append(loss_shrink_map)
+            loss_binary_maps.append(loss_binary_map)
+            loss_threshold_maps.append(loss_threshold_map)
+        loss_shrink_maps = torch.stack(loss_shrink_maps)
+        loss_binary_maps = torch.stack(loss_binary_maps)
+        loss_threshold_maps = torch.stack(loss_threshold_maps)
+        # mean or sum
+        if self.reduction == 'mean':
+            loss_shrink_maps = loss_shrink_maps.mean()
+            loss_binary_maps = loss_binary_maps.mean()
+            loss_threshold_maps = loss_threshold_maps.mean()
+        elif self.reduction == 'sum':
+            loss_shrink_maps = loss_shrink_maps.sum()
+            loss_binary_maps = loss_binary_maps.sum()
+            loss_threshold_maps = loss_threshold_maps.sum()
+        else:
+            raise NotImplementedError
+        loss_all = loss_shrink_maps + self.alpha * loss_binary_maps + self.beta * loss_threshold_maps
+        return loss_all, loss_shrink_maps, loss_binary_maps, loss_threshold_maps
 
     def threshold_loss(self, threshold_maps, gt_threshold_maps, gt_shrink_labels):
         selected_masks = (gt_threshold_maps > 0) | (gt_shrink_labels > 0)
@@ -50,22 +66,22 @@ class DBLoss(nn.Module):
         loss = self.l1(threshold_maps, gt_threshold_maps)
         return loss
 
-    def bce_loss(self, input, target, mask):
+    def bce_loss(self, input, target):
+        # ohem
+        mask = self.ohem_single(input.data.cpu().numpy(), target.data.cpu().numpy())
+        mask = torch.from_numpy(mask).float()
+        mask = mask.to(input.device)
         if mask.sum() == 0:
             return torch.tensor(0.0, device=input.device, requires_grad=True)
-        target[target <= 0.5] = 0
-        target[target > 0.5] = 1
         input = input[mask.bool()]
         target = target[mask.bool()]
         loss = self.bce(input, target)
         return loss
 
     def dice_loss(self, input, target, mask):
-        target[target <= 0.5] = 0
-        target[target > 0.5] = 1
-        input = input.contiguous().view(input.size()[0], -1)
-        target = target.contiguous().view(target.size()[0], -1)
-        mask = mask.contiguous().view(mask.size()[0], -1)
+        input = input.contiguous().view(-1)
+        target = target.contiguous().view(-1)
+        mask = mask.contiguous().view(-1)
 
         input = input * mask
         target = target * mask
@@ -81,32 +97,17 @@ class DBLoss(nn.Module):
 
         if pos_num == 0:
             selected_mask = np.zeros_like(score)
-            selected_mask = selected_mask.reshape(1, selected_mask.shape[0], selected_mask.shape[1]).astype('float32')
-            return selected_mask
+            return selected_mask.astype('float32')
 
         neg_num = (int)(np.sum(gt_text <= 0.5))
         neg_num = (int)(min(pos_num * self.ohem_ratio, neg_num))
 
         if neg_num == 0:
             selected_mask = np.zeros_like(score)
-            selected_mask = selected_mask.reshape(1, selected_mask.shape[0], selected_mask.shape[1]).astype('float32')
-            return selected_mask
+            return selected_mask.astype('float32')
 
         neg_score = score[gt_text <= 0.5]
         neg_score_sorted = np.sort(-neg_score)
         threshold = -neg_score_sorted[neg_num - 1]
         selected_mask = (score >= threshold) | (gt_text > 0.5)
-        selected_mask = selected_mask.reshape(1, selected_mask.shape[0], selected_mask.shape[1]).astype('float32')
-        return selected_mask
-
-    def ohem_batch(self, scores, gt_texts):
-        scores = scores.data.cpu().numpy()
-        gt_texts = gt_texts.data.cpu().numpy()
-        selected_masks = []
-        for i in range(scores.shape[0]):
-            selected_masks.append(self.ohem_single(scores[i, :, :], gt_texts[i, :, :]))
-
-        selected_masks = np.concatenate(selected_masks, 0)
-        selected_masks = torch.from_numpy(selected_masks).float()
-
-        return selected_masks
+        return selected_mask.astype('float32')

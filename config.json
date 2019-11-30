@@ -20,7 +20,7 @@
             },
             "loader": {
                 "validation_split": 0.1,
-                "train_batch_size": 1,
+                "train_batch_size": 2,
                 "shuffle": true,
                 "pin_memory": false,
                 "num_workers": 6
@@ -34,7 +34,7 @@
             "backbone": "resnet18",
             "fpem_repeat": 2,
             "pretrained": true,
-            "segmentation_head": "FPN",
+            "segmentation_head": "FPEM_FFM",
             "out_channels": 2
         }
     },
@@ -64,11 +64,11 @@
     "trainer": {
         "seed": 2,
         "gpus": [
-            0
+
         ],
         "epochs": 600,
         "display_interval": 1,
-        "show_images_interval": 50,
+        "show_images_interval": 1,
         "resume_checkpoint": "",
         "finetune_checkpoint": "",
         "output_dir": "output",

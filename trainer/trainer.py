@@ -54,7 +54,7 @@ class Trainer(BaseTrainer):
             if self.config['lr_scheduler']['type'] == 'PolynomialLR':
                 self.scheduler.step()
             # acc iou
-            score_shrink_map = cal_text_score(preds[:, 0, :, :], shrink_labels, running_metric_text)
+            score_shrink_map = cal_text_score(preds[:, 0, :, :], shrink_labels, running_metric_text, thred=0.5)
 
             # loss 和 acc 记录到日志
             loss_all = loss_all.item()

@@ -93,7 +93,7 @@ def generate_rbox(im_size, text_polys, text_tags, shrink_ratio):
             dilated_poly = np.array(pco.Execute(d))
             # if tag:
             # 生成 收缩label 图
-            cv2.fillPoly(shrink_label_map, shrinked_poly, i + 1)
+            cv2.fillPoly(shrink_label_map, shrinked_poly, 1)
             # 生成二值化label图
             cv2.fillPoly(threshold_label_map, dilated_poly, i + 1)
             cv2.fillPoly(threshold_label_map, shrinked_poly, 0)

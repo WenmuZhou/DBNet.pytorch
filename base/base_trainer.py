@@ -179,7 +179,7 @@ class BaseTrainer:
         """
         self.logger.info("Loading checkpoint: {} ...".format(checkpoint_path))
         checkpoint = torch.load(checkpoint_path)
-        self.model.load_state_dict(checkpoint['state_dict'])
+        self.model.load_state_dict(checkpoint['state_dict'], strict=resume)
         if resume:
             self.global_step = checkpoint['global_step']
             self.start_epoch = checkpoint['epoch'] + 1

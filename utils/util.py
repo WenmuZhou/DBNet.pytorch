@@ -25,6 +25,7 @@ def setup_logger(log_file_path: str = None):
     logger.info('logger init finished')
     return logger
 
+
 # --exeTime
 def exe_time(func):
     def newFunc(*args, **args2):
@@ -69,16 +70,17 @@ def draw_bbox(img_path, result, color=(255, 0, 0), thickness=2):
     return img_path
 
 
-def cal_text_score(texts, gt_texts, running_metric_text):
+def cal_text_score(texts, gt_texts, running_metric_text, thred=0.5):
     pred_text = texts.data.cpu().numpy()
-    pred_text[pred_text <= 0.5] = 0
-    pred_text[pred_text > 0.5] = 1
+    pred_text[pred_text <= thred] = 0
+    pred_text[pred_text > thred] = 1
     pred_text = pred_text.astype(np.int32)
     gt_text = gt_texts.data.cpu().numpy()
     gt_text = gt_text.astype(np.int32)
     running_metric_text.update(gt_text, pred_text)
     score_text, _ = running_metric_text.get_scores()
     return score_text
+
 
 def order_points_clockwise(pts):
     rect = np.zeros((4, 2), dtype="float32")
