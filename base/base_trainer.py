@@ -85,7 +85,7 @@ class BaseTrainer:
                 dummy_input = torch.zeros(1, self.config['data_loader']['args']['dataset']['img_channel'],
                                           self.config['data_loader']['args']['dataset']['input_size'],
                                           self.config['data_loader']['args']['dataset']['input_size']).to(self.device)
-                self.writer.add_graph(model, dummy_input)
+                self.writer.add_graph(self.model, dummy_input)
             except:
                 import traceback
                 # self.logger.error(traceback.format_exc())

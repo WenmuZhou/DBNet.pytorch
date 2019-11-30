@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 def setup_logger(log_file_path: str = None):
     import logging
+    logging._warn_preinit_stderr = 0
     logger = logging.getLogger('DBNet.pytorch')
-    logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s')
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
@@ -21,6 +21,7 @@ def setup_logger(log_file_path: str = None):
         file_handle = logging.FileHandler(log_file_path)
         file_handle.setFormatter(formatter)
         logger.addHandler(file_handle)
+    logger.setLevel(logging.DEBUG)
     logger.info('logger init finished')
     return logger
 
@@ -100,10 +101,5 @@ def order_points_clockwise_list(pts):
 
 
 if __name__ == '__main__':
-    box = np.array([382, 1080, 443, 999, 423, 1014, 362, 1095]).reshape(-1, 2)
-    # box = np.array([0, 4, 2, 2, 0, 8, 4, 4]).reshape(-1, 2)
-    # box = np.array([0, 0, 2, 2, 0, 4, 4, 4]).reshape(-1, 2)
-    from scipy.spatial import ConvexHull
-
-    # print(order_points_colckwise(box))
-    print(order_points_clockwise_list(box))
+    log = setup_logger('1')
+    log.info('1')

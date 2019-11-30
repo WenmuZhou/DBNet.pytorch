@@ -11,5 +11,5 @@ class DB(nn.Module):
         self.k = k
 
     def forward(self, shrink_maps, threshold_maps):
-        b_maps = self.k * (shrink_maps * threshold_maps)
+        b_maps = self.k * (shrink_maps - threshold_maps)
         return torch.sigmoid(b_maps)
