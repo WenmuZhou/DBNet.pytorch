@@ -25,7 +25,7 @@ segmentation_head_dict = {'FPN': FPN, 'FPEM_FFM': FPEM_FFM}
 # 'shufflenetv2': {'models': shufflenet_v2_x1_0, 'out': [24, 116, 232, 464]}}
 
 
-class Model(nn.Module):
+class DBModel(nn.Module):
     def __init__(self, model_config: dict):
         """
         PANnet

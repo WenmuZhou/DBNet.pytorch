@@ -28,7 +28,7 @@
         }
     },
     "arch": {
-        "type": "PANModel",
+        "type": "DBModel",
         "args": {
             "k": 50,
             "backbone": "resnet18",
@@ -39,7 +39,7 @@
         }
     },
     "loss": {
-        "type": "PANLoss",
+        "type": "DBLoss",
         "args": {
             "alpha": 1,
             "beta": 10,

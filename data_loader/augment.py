@@ -121,7 +121,7 @@ class DataAugment():
             return imgs
 
         # label中存在文本实例，并且按照概率进行裁剪，使用threshold_label_map控制
-        if np.max(imgs[2]) > 0 and random.random() > 0:
+        if np.max(imgs[2]) > 0 and random.random() > 3 / 8:
             # 文本实例的左上角点
             tl = np.min(np.where(imgs[2] > 0), axis=1) - img_size
             tl[tl < 0] = 0
