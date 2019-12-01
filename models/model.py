@@ -54,7 +54,7 @@ class DBModel(nn.Module):
         y = torch.sigmoid(y)
         if self.training:
             shrink_maps, threshold_maps = y[:, 0, :, :], y[:, 1, :, :]
-            binary_maps = self.db(shrink_maps, threshold_maps).unsqueeze(1)
+            binary_maps = self.db(shrink_maps, threshold_maps).unsqueeze(1) # DB前输入加不加sigmoid差不多
             y = torch.cat((y, binary_maps), dim=1)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y
