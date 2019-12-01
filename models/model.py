@@ -51,11 +51,11 @@ class DBModel(nn.Module):
         _, _, H, W = x.size()
         backbone_out = self.backbone(x)
         y = self.segmentation_head(backbone_out)
+        y = torch.sigmoid(y)
         if self.training:
             shrink_maps, threshold_maps = y[:, 0, :, :], y[:, 1, :, :]
             binary_maps = self.db(shrink_maps, threshold_maps).unsqueeze(1)
             y = torch.cat((y, binary_maps), dim=1)
-        y[:, :2, :, :] = torch.sigmoid(y[:, :2, :, :])
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y
 

@@ -11,8 +11,7 @@ import pyclipper
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-
-def de_shrink(poly, r = 0.5):
+def de_shrink(poly, r=1.5):
     d_i = cv2.contourArea(poly) * r / cv2.arcLength(poly, True)
     pco = pyclipper.PyclipperOffset()
     pco.AddPath(poly, pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
@@ -64,7 +63,7 @@ def decode(preds, threshold=0.2, min_area=5):
     return label, np.array(bbox_list)
 
 
-def decode_py(preds, threshold=0.7311, min_area=5):
+def decode_py(preds, threshold=0.2, min_area=5):
     shrink_map = preds[0, :, :].detach().cpu().numpy()
     # score_map = shrink_map.astype(np.float32)
     shrink_map = shrink_map > threshold

@@ -35,7 +35,7 @@ class DBLoss(nn.Module):
         for shrink_map, threshold_map, binary_map, gt_shrink_label, gt_threshold_label in zip(shrink_maps, threshold_maps, binary_maps, gt_shrink_labels,
                                                                                               gt_threshold_labels):
             loss_shrink_map = self.bce_loss(shrink_map, gt_shrink_label)
-            loss_binary_map = self.bce_loss(binary_map, gt_shrink_label)
+            loss_binary_map = self.bce_loss(torch.sigmoid(binary_map), gt_shrink_label) # 理论上binary_map已经sigmoid了，不知道为什么这里加了sigmoid才会收敛
             loss_threshold_map = self.threshold_loss(threshold_map, gt_threshold_label, gt_shrink_label)
             loss_shrink_maps.append(loss_shrink_map)
             loss_binary_maps.append(loss_binary_map)
