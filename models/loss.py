@@ -78,32 +78,18 @@ class DBLoss(nn.Module):
         loss = self.bce(input, target)
         return loss
 
-    def dice_loss(self, input, target, mask):
-        input = input.contiguous().view(-1)
-        target = target.contiguous().view(-1)
-        mask = mask.contiguous().view(-1)
-
-        input = input * mask
-        target = target * mask
-
-        a = torch.sum(input * target, 1)
-        b = torch.sum(input * input, 1) + 0.001
-        c = torch.sum(target * target, 1) + 0.001
-        d = (2 * a) / (b + c)
-        return (1 - d).mean()
-
     def ohem_single(self, score, gt_text):
         pos_num = (int)(np.sum(gt_text > 0.5))
 
         if pos_num == 0:
-            selected_mask = np.zeros_like(score)
+            selected_mask = np.ones_like(score)
             return selected_mask.astype('float32')
 
         neg_num = (int)(np.sum(gt_text <= 0.5))
         neg_num = (int)(min(pos_num * self.ohem_ratio, neg_num))
 
         if neg_num == 0:
-            selected_mask = np.zeros_like(score)
+            selected_mask = np.ones_like(score)
             return selected_mask.astype('float32')
 
         neg_score = score[gt_text <= 0.5]

@@ -20,7 +20,7 @@
             },
             "loader": {
                 "validation_split": 0.1,
-                "train_batch_size": 2,
+                "train_batch_size": 1,
                 "shuffle": true,
                 "pin_memory": false,
                 "num_workers": 6
@@ -64,11 +64,11 @@
     "trainer": {
         "seed": 2,
         "gpus": [
-
+            0
         ],
         "epochs": 600,
         "display_interval": 1,
-        "show_images_interval": 1,
+        "show_images_interval": 50,
         "resume_checkpoint": "",
         "finetune_checkpoint": "",
         "output_dir": "output",
