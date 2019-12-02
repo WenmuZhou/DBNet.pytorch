@@ -24,16 +24,16 @@ class ImageDataset(Dataset):
         im = cv2.imread(img_path, 1 if self.img_channel == 3 else 0)
         if self.img_channel == 3:
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        img, score_map, training_mask = image_label(im, text_polys, text_tags, self.input_size,
+        img, shrink_label_map, threshold_label_map = image_label(im, text_polys, text_tags, self.input_size,
                                                     self.shrink_ratio)
         # img = draw_bbox(img,text_polys)
         img = Image.fromarray(img)
         if self.transform:
             img = self.transform(img)
         if self.target_transform:
-            score_map = self.target_transform(score_map)
-            training_mask = self.target_transform(training_mask)
-        return img, score_map, training_mask
+            shrink_label_map = self.target_transform(shrink_label_map)
+            threshold_label_map = self.target_transform(threshold_label_map)
+        return img, shrink_label_map, threshold_label_map
 
     def load_data(self, data_list: list) -> list:
         t_data_list = []

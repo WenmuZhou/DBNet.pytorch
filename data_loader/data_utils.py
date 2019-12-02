@@ -84,22 +84,19 @@ def generate_rbox(im_size, text_polys, text_tags, shrink_ratio):
     shrink_label_map = np.zeros((h, w), dtype=np.float32)
     threshold_label_map = np.zeros((h, w), dtype=np.float32)
     for i, (poly, tag) in enumerate(zip(text_polys, text_tags)):
-        try:
-            poly = poly.astype(np.int)
-            d = cv2.contourArea(poly) * (1 - shrink_ratio * shrink_ratio) / cv2.arcLength(poly, True)
-            pco = pyclipper.PyclipperOffset()
-            pco.AddPath(poly, pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
-            shrinked_poly = np.array(pco.Execute(-d))
-            dilated_poly = np.array(pco.Execute(d))
-            # if tag:
-            # 生成 收缩label 图
-            cv2.fillPoly(shrink_label_map, shrinked_poly, 1)
-            # 生成二值化label图
-            cv2.fillPoly(threshold_label_map, dilated_poly, i + 1)
-            cv2.fillPoly(threshold_label_map, shrinked_poly, 0)
-            threshold_label_map = generate_threshold_label(threshold_label_map, poly, i + 1)
-        except:
-            print(poly)
+        poly = poly.astype(np.int)
+        d = cv2.contourArea(poly) * (1 - shrink_ratio * shrink_ratio) / cv2.arcLength(poly, True)
+        pco = pyclipper.PyclipperOffset()
+        pco.AddPath(poly, pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
+        shrinked_poly = np.array(pco.Execute(-d))
+        dilated_poly = np.array(pco.Execute(d))
+        # if tag:
+        # 生成 收缩label 图
+        cv2.fillPoly(shrink_label_map, shrinked_poly, 1)
+        # 生成二值化label图
+        cv2.fillPoly(threshold_label_map, dilated_poly, i + 1)
+        cv2.fillPoly(threshold_label_map, shrinked_poly, 0)
+        threshold_label_map = generate_threshold_label(threshold_label_map, poly, i + 1)
     return shrink_label_map, threshold_label_map
 
 
