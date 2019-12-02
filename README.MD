@@ -3,7 +3,7 @@
 [中文解读](https://zhuanlan.zhihu.com/p/94677957)
 
 
-![](imgs/paper/db.png)
+![network](imgs/paper/db.png)
 
 ## Requirements
 * pytorch 1.1+
