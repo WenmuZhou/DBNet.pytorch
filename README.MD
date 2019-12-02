@@ -1,5 +1,8 @@
 # Real-time Scene Text Detection with Differentiable Binarization
 
+[中文解读](https://zhuanlan.zhihu.com/p/94677957)
+
+
 ![](imgs/paper/db.png)
 
 ## Requirements
