@@ -71,32 +71,35 @@ def generate_threshold_label(threshold_label_map, poly, index):
     return threshold_label_map
 
 
-def generate_rbox(im_size, text_polys, text_tags, shrink_ratio):
+def generate_rbox(im_size, text_polys, texts, shrink_ratio):
     """
     生成mask图，白色部分是文本，黑色是北京
     :param im_size: 图像的h,w
     :param text_polys: 框的坐标
-    :param text_tags: 标注文本框是否参与训练
+    :param texts: 标注文本框是否参与训练
     :param shrink_ratio: 收缩的比例
     :return: 生成的mask图
     """
     h, w = im_size
     shrink_label_map = np.zeros((h, w), dtype=np.float32)
     threshold_label_map = np.zeros((h, w), dtype=np.float32)
-    for i, (poly, tag) in enumerate(zip(text_polys, text_tags)):
-        poly = poly.astype(np.int)
-        d = cv2.contourArea(poly) * (1 - shrink_ratio * shrink_ratio) / cv2.arcLength(poly, True)
-        pco = pyclipper.PyclipperOffset()
-        pco.AddPath(poly, pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
-        shrinked_poly = np.array(pco.Execute(-d))
-        dilated_poly = np.array(pco.Execute(d))
-        # if tag:
-        # 生成 收缩label 图
-        cv2.fillPoly(shrink_label_map, shrinked_poly, 1)
-        # 生成二值化label图
-        cv2.fillPoly(threshold_label_map, dilated_poly, i + 1)
-        cv2.fillPoly(threshold_label_map, shrinked_poly, 0)
-        threshold_label_map = generate_threshold_label(threshold_label_map, poly, i + 1)
+    for i, (poly, text) in enumerate(zip(text_polys, texts)):
+        try:
+            poly = poly.astype(np.int)
+            d = cv2.contourArea(poly) * (1 - shrink_ratio * shrink_ratio) / cv2.arcLength(poly, True)
+            pco = pyclipper.PyclipperOffset()
+            pco.AddPath(poly, pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
+            shrinked_poly = np.array(pco.Execute(-d))
+            dilated_poly = np.array(pco.Execute(d))
+            if text not in ['*', '###']:
+                # 生成 收缩label 图
+                cv2.fillPoly(shrink_label_map, shrinked_poly, 1)
+                # 生成二值化label图
+                cv2.fillPoly(threshold_label_map, dilated_poly, i + 1)
+                cv2.fillPoly(threshold_label_map, shrinked_poly, 0)
+                threshold_label_map = generate_threshold_label(threshold_label_map, poly, i + 1)
+        except:
+            print(poly)
     return shrink_label_map, threshold_label_map
 
 
@@ -111,14 +114,14 @@ def augmentation(im: np.ndarray, text_polys: np.ndarray, scales: np.ndarray, deg
     return im, text_polys
 
 
-def image_label(im: np.ndarray, text_polys: np.ndarray, text_tags: list, input_size: int = 640,
+def image_label(im: np.ndarray, text_polys: np.ndarray, texts: list, input_size: int = 640,
                 shrink_ratio: float = 0.5, degrees: int = 10,
                 scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
     """
     读取图片并生成label
     :param im: 图片
     :param text_polys: 文本标注框
-    :param text_tags: 是否忽略文本的标致：true 忽略, false 不忽略
+    :param texts: 文本
     :param input_size: 输出图像的尺寸
     :param shrink_ratio: gt收缩的比例
     :param degrees: 随机旋转的角度
@@ -139,7 +142,7 @@ def image_label(im: np.ndarray, text_polys: np.ndarray, text_tags: list, input_s
         text_polys *= scale
 
     h, w, _ = im.shape
-    shrink_label_map, threshold_label_map = generate_rbox((h, w), text_polys, text_tags, shrink_ratio)
+    shrink_label_map, threshold_label_map = generate_rbox((h, w), text_polys, texts, shrink_ratio)
     imgs = [im, shrink_label_map, threshold_label_map]
     imgs = data_aug.random_crop(imgs, (input_size, input_size))
     return imgs[0], imgs[1], imgs[2]  # im, shrink_label_map, threshold_label_map

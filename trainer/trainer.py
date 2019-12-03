@@ -26,7 +26,7 @@ class Trainer(BaseTrainer):
         if self.config['lr_scheduler']['type'] == 'PolynomialLR':
             self.scheduler = PolynomialLR(self.optimizer, self.epochs * self.train_loader_len)
 
-        self.logger.info('train dataset has {} samples,{} in dataloader'.format(self.train_loader.dataset_len, self.train_loader_len))
+        self.logger.info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader), self.train_loader_len))
 
     def _train_epoch(self, epoch):
         self.model.train()

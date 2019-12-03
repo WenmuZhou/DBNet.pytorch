@@ -2,14 +2,17 @@
 # @Time    : 2019/8/23 21:54
 # @Author  : zhoujun
 import cv2
+import torch
+import pathlib
 import numpy as np
 from PIL import Image
+import scipy.io as sio
 from torch.utils.data import Dataset, DataLoader
 from data_loader.data_utils import image_label
 from utils import order_points_clockwise
 
 
-class ImageDataset(Dataset):
+class ICDAR2015Dataset(Dataset):
     def __init__(self, data_list: list, input_size: int, img_channel: int, shrink_ratio: float, transform=None,
                  target_transform=None):
         self.data_list = self.load_data(data_list)
@@ -20,12 +23,12 @@ class ImageDataset(Dataset):
         self.shrink_ratio = shrink_ratio
 
     def __getitem__(self, index):
-        img_path, text_polys, text_tags = self.data_list[index]
+        img_path, text_polys, texts = self.data_list[index]
         im = cv2.imread(img_path, 1 if self.img_channel == 3 else 0)
         if self.img_channel == 3:
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        img, shrink_label_map, threshold_label_map = image_label(im, text_polys, text_tags, self.input_size,
-                                                    self.shrink_ratio)
+        img, shrink_label_map, threshold_label_map = image_label(im, text_polys, texts, self.input_size,
+                                                                 self.shrink_ratio)
         # img = draw_bbox(img,text_polys)
         img = Image.fromarray(img)
         if self.transform:
@@ -47,7 +50,7 @@ class ImageDataset(Dataset):
 
     def _get_annotation(self, label_path: str) -> tuple:
         boxes = []
-        text_tags = []
+        texts = []
         with open(label_path, encoding='utf-8', mode='r') as f:
             for line in f.readlines():
                 params = line.strip().strip('\ufeff').strip('\xef\xbb\xbf').split(',')
@@ -56,16 +59,72 @@ class ImageDataset(Dataset):
                     if cv2.arcLength(box, True) > 0:
                         boxes.append(box)
                         label = params[8]
-                        if label == '*' or label == '###':
-                            text_tags.append(False)
-                        else:
-                            text_tags.append(True)
+                        texts.append(label)
                 except:
                     print('load label failed on {}'.format(label_path))
-        return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
+        return np.array(boxes, dtype=np.float32), np.array(texts, dtype=np.bool)
 
     def __len__(self):
         return len(self.data_list)
+
+
+class SynthTextDataset(Dataset):
+
+    def __init__(self, data_list: str, input_size: int, img_channel: int, shrink_ratio: float, transform=None,
+                 target_transform=None):
+        self.input_size = input_size
+        self.img_channel = img_channel
+        self.transform = transform
+        self.target_transform = target_transform
+        self.shrink_ratio = shrink_ratio
+        self.dataRoot = pathlib.Path(data_list)
+        if not self.dataRoot.exists():
+            raise FileNotFoundError('Dataset folder is not exist.')
+
+        self.targetFilePath = self.dataRoot / 'gt.mat'
+        if not self.targetFilePath.exists():
+            raise FileExistsError('Target file is not exist.')
+        targets = {}
+        sio.loadmat(self.targetFilePath, targets, squeeze_me=True, struct_as_record=False,
+                    variable_names=['imnames', 'wordBB', 'txt'])
+
+        self.imageNames = targets['imnames']
+        self.wordBBoxes = targets['wordBB']
+        self.transcripts = targets['txt']
+
+    def __getitem__(self, index):
+        """
+
+        :param index:
+        :return:
+            imageName: path of image
+            wordBBox: bounding boxes of words in the image
+            transcript: corresponding transcripts of bounded words
+        """
+        imageName = self.imageNames[index]
+        wordBBoxes = self.wordBBoxes[index]  # 2 * 4 * num_words
+        transcripts = self.transcripts[index]
+        im = cv2.imread((self.dataRoot / imageName).as_posix())
+        imagePath = pathlib.Path(imageName)
+        wordBBoxes = np.expand_dims(wordBBoxes, axis=2) if (wordBBoxes.ndim == 2) else wordBBoxes
+        _, _, numOfWords = wordBBoxes.shape
+        text_polys = wordBBoxes.reshape([8, numOfWords], order='F').T  # num_words * 8
+        text_polys = text_polys.reshape(numOfWords, 4, 2)  # num_of_words * 4 * 2
+        transcripts = [word for line in transcripts for word in line.split()]
+
+        img, shrink_label_map, threshold_label_map = image_label(im, text_polys, transcripts, self.input_size,
+                                                                 self.shrink_ratio)
+        # img = draw_bbox(img,text_polys)
+        img = Image.fromarray(img)
+        if self.transform:
+            img = self.transform(img)
+        if self.target_transform:
+            shrink_label_map = self.target_transform(shrink_label_map)
+            threshold_label_map = self.target_transform(threshold_label_map)
+        return img, shrink_label_map, threshold_label_map
+
+    def __len__(self):
+        return len(self.imageNames)
 
 
 class Batch_Balanced_Dataset(object):
@@ -130,13 +189,12 @@ class Batch_Balanced_Dataset(object):
 
 
 if __name__ == '__main__':
-    import torch
     from utils.util import show_img
     from tqdm import tqdm
     import matplotlib.pyplot as plt
     from torchvision import transforms
 
-    train_data = ImageDataset(
+    train_data = ICDAR2015Dataset(
         data_list=[
             (r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')],
         input_size=640,
