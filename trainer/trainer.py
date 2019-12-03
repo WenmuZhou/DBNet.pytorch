@@ -52,7 +52,7 @@ class Trainer(BaseTrainer):
             self.optimizer.zero_grad()
             loss_all.backward()
             self.optimizer.step()
-            if self.config['lr_scheduler']['type'] == 'PolynomialLR':
+            if self.config['lr_scheduler']['type'] == 'WarmupPolyLR':
                 self.scheduler.step()
             # acc iou
             score_shrink_map = cal_text_score(preds[:, 0, :, :], shrink_labels, running_metric_text, thred=0.5)
