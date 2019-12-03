@@ -11,7 +11,7 @@ import torch
 import torchvision.utils as vutils
 from torchvision import transforms
 from post_processing import decode_py as decode
-from utils import PolynomialLR, runningScore, cal_text_score, cal_recall_precison_f1
+from utils import WarmupPolyLR, WarmupMultiStepLR, runningScore, cal_text_score, cal_recall_precison_f1
 
 from base import BaseTrainer
 
@@ -23,10 +23,11 @@ class Trainer(BaseTrainer):
         self.test_path = self.config['data_loader']['args']['dataset']['val_data_path']
         self.train_loader = train_loader
         self.train_loader_len = len(train_loader)
-        if self.config['lr_scheduler']['type'] == 'PolynomialLR':
-            self.scheduler = PolynomialLR(self.optimizer, self.epochs * self.train_loader_len)
+        if self.config['lr_scheduler']['type'] == 'WarmupPolyLR':
+            base_lr = config['optimizer']['args']['lr']
+            self.scheduler = WarmupPolyLR(self.optimizer, target_lr=base_lr * 1e-2, max_iters=self.epochs * self.train_loader_len)
 
-        self.logger.info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader), self.train_loader_len))
+        self.logger.info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader.dataset), self.train_loader_len))
 
     def _train_epoch(self, epoch):
         self.model.train()

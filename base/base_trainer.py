@@ -69,7 +69,7 @@ class BaseTrainer:
         else:
             if weights_init is not None:
                 model.apply(weights_init)
-        if self.config['lr_scheduler']['type'] != 'PolynomialLR':
+        if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
             self.scheduler = self._initialize('lr_scheduler', torch.optim.lr_scheduler, self.optimizer)
 
         # 单机多卡
@@ -98,7 +98,7 @@ class BaseTrainer:
         for epoch in range(self.start_epoch, self.epochs + 1):
             try:
                 self.epoch_result = self._train_epoch(epoch)
-                if self.config['lr_scheduler']['type'] != 'PolynomialLR':
+                if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
                     self.scheduler.step()
                 self._on_epoch_finish()
             except torch.cuda.CudaError:

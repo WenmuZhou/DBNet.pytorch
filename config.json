@@ -46,7 +46,7 @@
         }
     },
     "lr_scheduler": {
-        "type": "PolynomialLR",
+        "type": "WarmupPolyLR",
         "args": {
             "step_size": 200,
             "gamma": 0.1
