@@ -7,11 +7,11 @@ from data_loader.modules import *
 
 class BaseDataSet(Dataset):
 
-    def __init__(self, data_path: list, img_model, pre_processes, transform=None,
+    def __init__(self, data_path: list, img_mode, pre_processes, transform=None,
                  target_transform=None):
-        assert img_model in ['RGB', 'BRG', 'GRAY']
+        assert img_mode in ['RGB', 'BRG', 'GRAY']
         self.data_list = self.load_data(data_path)
-        self.img_model = img_model
+        self.img_mode = img_mode
         self.transform = transform
         self.target_transform = target_transform
         self._init_apre_processes(pre_processes)

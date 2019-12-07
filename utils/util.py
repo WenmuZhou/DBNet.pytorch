@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:59
 # @Author  : zhoujun
-import time
 import json
-import cv2
 import pathlib
-import numpy as np
+import time
+
+import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def setup_logger(log_file_path: str = None):
@@ -42,9 +43,9 @@ def save_json(data, json_path):
         json.dump(data, f, indent=4)
 
 
-def show_img(imgs: np.ndarray, title='img', color=False):
-    if (len(imgs.shape) == 3 and color) or (len(imgs.shape) == 2 and not color):
-        imgs = np.expand_dims(imgs, axis=0)
+def show_img(imgs: np.ndarray, title='img'):
+    color = (len(imgs.shape) == 3 and imgs.shape[-1] == 3)
+    imgs = np.expand_dims(imgs, axis=0)
     for i, img in enumerate(imgs):
         plt.figure()
         plt.title('{}_{}'.format(title, i))
@@ -122,7 +123,7 @@ def parse_config(config: dict) -> dict:
     base_file_list = config.pop('base')
     base_config = {}
     for base_file in base_file_list:
-        tmp_config = anyconfig.load(base_file)
+        tmp_config = anyconfig.load(open(base_file, 'rb'))
         if 'base' in tmp_config:
             tmp_config = parse_config(tmp_config)
         anyconfig.merge(tmp_config, base_config)
@@ -132,5 +133,6 @@ def parse_config(config: dict) -> dict:
 
 
 if __name__ == '__main__':
-    log = setup_logger('1')
-    log.info('1')
+    img = np.zeros((1,3,640,640))
+    show_img(img[0][0])
+    plt.show()

@@ -2,15 +2,15 @@
 # @Time    : 2019/8/24 12:06
 # @Author  : zhoujun
 
-import torch
-from torchvision import transforms
 import os
-import cv2
 import time
 
-from models import get_model
+import cv2
+import torch
 
-from post_processing import decode_py as decode
+from data_loader import get_transforms
+from models import get_model
+from post_processing import get_post_processing
 
 
 class Pytorch_model:
@@ -31,45 +31,53 @@ class Pytorch_model:
 
         config = checkpoint['config']
         config['arch']['args']['pretrained'] = False
-        self.net = get_model(config)
-
-        self.img_channel = config['data_loader']['args']['dataset']['img_channel']
+        self.net = get_model(config['arch'])
+        self.post_process = get_post_processing(config['post_processing'])
+        config['dataset']['train']['dataset']['args']['img_mode'] = config['dataset']['train']['dataset']['args']['img_model']
+        self.img_mode = config['dataset']['train']['dataset']['args']['img_mode']
         self.net.load_state_dict(checkpoint['state_dict'])
         self.net.to(self.device)
         self.net.eval()
 
-    def predict(self, img: str, short_size: int = 736):
+        self.transform = []
+        for t in config['dataset']['train']['dataset']['args']['transforms']:
+            if t['type'] in ['ToTensor', 'Normalize']:
+                self.transform.append(t)
+        self.transform = get_transforms(self.transform)
+
+    def predict(self, img_path: str, short_size: int = 736):
         '''
         对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
-        :param img: 图像地址
+        :param img_path: 图像地址
         :param is_numpy:
         :return:
         '''
-        assert os.path.exists(img), 'file is not exists'
-        img = cv2.imread(img)
-        if self.img_channel == 3:
+        assert os.path.exists(img_path), 'file is not exists'
+        img = cv2.imread(img_path, 1 if self.img_mode != 'GRAY' else 0)
+        if self.img_mode == 'RGB':
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
         scale = short_size / min(h, w)
         img = cv2.resize(img, None, fx=scale, fy=scale)
         # 将图片由(w,h)变为(1,img_channel,h,w)
-        tensor = transforms.ToTensor()(img)
+        tensor = self.transform(img)
         tensor = tensor.unsqueeze_(0)
 
         tensor = tensor.to(self.device)
+        batch = {'shape': [(h, w)]}
         with torch.no_grad():
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
             start = time.time()
-            preds = self.net(tensor)[0]
+            preds = self.net(tensor)
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
-            preds, boxes_list = decode(preds)
-            scale = (preds.shape[1] / w, preds.shape[0] / h)
-            if len(boxes_list):
-                boxes_list = boxes_list / scale
+            box_list, score_list = self.post_process(batch, preds)
+            box_list, score_list = box_list[0], score_list[0]
+            idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0
+            box_list, score_list = box_list[idx], score_list[idx]
             t = time.time() - start
-        return preds, boxes_list, t
+        return preds[0, 0, :, :].detach().cpu().numpy().transpose((1, 2, 0)), box_list, t
 
 
 if __name__ == '__main__':
@@ -78,7 +86,7 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
 
-    model_path = 'output/PAN_shufflenetv2_FPEM_FFM.pth'
+    model_path = 'output/DBNet_resnet18_FPN_DBHead/checkpoint/DBNet_latest.pth'
 
     img_id = 10
     img_path = 'E:/zj/dataset/icdar2015/test/img/img_{}.jpg'.format(img_id)

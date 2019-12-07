@@ -45,7 +45,6 @@ class Trainer(BaseTrainer):
         for i, batch in enumerate(self.train_loader):
             if i >= self.train_loader_len:
                 break
-            break
             self.global_step += 1
             lr = self.optimizer.param_groups[0]['lr']
 
@@ -98,6 +97,7 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar('TRAIN/lr', lr, self.global_step)
                 if self.global_step % self.show_images_iter == 0:
                     # show images on tensorboard
+                    self.inverse_normalize(batch['img'])
                     self.writer.add_images('TRAIN/imgs', batch['img'], self.global_step)
                     # shrink_labels and threshold_labels
                     shrink_labels = batch['shrink_map']
@@ -105,26 +105,21 @@ class Trainer(BaseTrainer):
                     shrink_labels[shrink_labels <= 0.5] = 0
                     shrink_labels[shrink_labels > 0.5] = 1
                     show_label = torch.cat([shrink_labels, threshold_labels])
-                    show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=cur_batch_size, normalize=False,
-                                                  padding=20,
-                                                  pad_value=1)
+                    show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=cur_batch_size, normalize=False, padding=20, pad_value=1)
                     self.writer.add_image('TRAIN/gt', show_label, self.global_step)
                     # model output
-                    show_pred = vutils.make_grid(preds.reshape(-1, 1, *preds.shape[-2:]), nrow=cur_batch_size, normalize=False,
-                                                 padding=20,
-                                                 pad_value=1)
+                    show_pred = []
+                    for kk in range(preds.shape[1]):
+                        show_pred.append(preds[:, kk, :, :])
+                    show_pred = torch.cat(show_pred)
+                    show_pred = vutils.make_grid(show_pred.unsqueeze(1), nrow=cur_batch_size, normalize=False, padding=20, pad_value=1)
                     self.writer.add_image('TRAIN/preds', show_pred, self.global_step)
-
         return {'train_loss': train_loss / self.train_loader_len, 'lr': lr, 'time': time.time() - epoch_start,
                 'epoch': epoch}
 
     def _eval(self, epoch):
         self.model.eval()
         # torch.cuda.empty_cache()  # speed up evaluating after training finished
-        test_save_path = os.path.join(self.save_dir, 'test_result_{}'.format(epoch))
-        if not os.path.exists(self.checkpoint_dir):
-            os.makedirs(self.checkpoint_dir)
-        os.makedirs(test_save_path)
         raw_metrics = []
         for i, batch in tqdm(enumerate(self.validate_loader), total=len(self.validate_loader), desc='test model'):
             with torch.no_grad():

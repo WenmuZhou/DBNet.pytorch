@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     args = init_args()
     assert os.path.exists(args.config_path)
-    config = anyconfig.load(args.config_path)
+    config = anyconfig.load(open(args.config_path, 'rb'))
     if 'base' in config:
         config = parse_config(config)
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in config['trainer']['gpus']])

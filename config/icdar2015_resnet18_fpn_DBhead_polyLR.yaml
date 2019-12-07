@@ -40,9 +40,9 @@ lr_scheduler:
     warmup_epoch: 3
 trainer:
   seed: 2
-  gpus: [0,1]
+  gpus: [0]
   epochs: 600
-  los_iter: 1
+  los_iter: 10
   show_images_iter: 50
   resume_checkpoint: ''
   finetune_checkpoint: ''
@@ -55,9 +55,9 @@ dataset:
       args:
         data_path:
           - 'E:\zj\dataset\icdar2015\train\train.txt'
-        img_model: 'RGB'
+        img_mode: 'RGB'
     loader:
-      batch_size: 1
+      batch_size: 2
       shuffle: true
       pin_memory: true
       num_workers: 6
@@ -71,7 +71,7 @@ dataset:
           - type: ResizeShortSize
             args:
               short_size: 736
-        img_model: 'RGB'
+        img_mode: 'RGB'
     loader:
       batch_size: 1
       shuffle: true

@@ -42,8 +42,7 @@ def get_transforms(transforms_config):
 
 class ICDARCollectFN():
     def __init__(self, *args, **kwargs):
-        self.to_tensor = transforms.ToTensor()
-
+        pass
     def __call__(self, batch):
         data_dict = {}
         to_tensor_keys = []
@@ -52,7 +51,6 @@ class ICDARCollectFN():
                 if k not in data_dict:
                     data_dict[k] = []
                 if isinstance(v, (np.ndarray, torch.Tensor, PIL.Image.Image)):
-                    v = self.to_tensor(v)
                     if k not in to_tensor_keys:
                         to_tensor_keys.append(k)
                 data_dict[k].append(v)

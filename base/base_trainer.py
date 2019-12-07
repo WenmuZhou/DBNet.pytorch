@@ -9,7 +9,6 @@ from pprint import pformat
 
 import anyconfig
 import torch
-from torch import nn
 
 from utils import setup_logger
 
@@ -58,10 +57,12 @@ class BaseTrainer:
             self.logger.info('train with cpu and pytorch {}'.format(torch.__version__))
             self.device = torch.device("cpu")
         self.logger.info('device {}'.format(self.device))
+        # metrics
         self.metrics = {'recall': 0, 'precision': 0, 'hmean': 0, 'train_loss': float('inf'), 'best_model': ''}
 
         self.optimizer = self._initialize('optimizer', torch.optim, model.parameters())
 
+        # resume or finetune
         if self.config['trainer']['resume_checkpoint'] != '':
             self._laod_checkpoint(self.config['trainer']['resume_checkpoint'], resume=True)
         elif self.config['trainer']['finetune_checkpoint'] != '':
@@ -87,6 +88,13 @@ class BaseTrainer:
                 self.logger.error(traceback.format_exc())
                 self.logger.warn('add graph to tensorboard failed')
 
+        # make inverse Normalize
+        self.UN_Normalize = False
+        for t in self.config['dataset']['train']['dataset']['args']['transforms']:
+            if t['type'] == 'Normalize':
+                self.normalize_mean = t['args']['mean']
+                self.normalize_std = t['args']['std']
+                self.UN_Normalize = True
 
     def train(self):
         """
@@ -200,3 +208,9 @@ class BaseTrainer:
         assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
         module_args.update(kwargs)
         return getattr(module, module_name)(*args, **module_args)
+
+    def inverse_normalize(self, batch_img):
+        if self.UN_Normalize:
+            batch_img[:, 0, :, :] = batch_img[:, 0, :, :] * self.normalize_std[0] + self.normalize_mean[0]
+            batch_img[:, 1, :, :] = batch_img[:, 1, :, :] * self.normalize_std[1] + self.normalize_mean[1]
+            batch_img[:, 2, :, :] = batch_img[:, 2, :, :] * self.normalize_std[2] + self.normalize_mean[2]

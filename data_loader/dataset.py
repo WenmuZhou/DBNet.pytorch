@@ -16,20 +16,19 @@ from utils import order_points_clockwise
 
 
 class ICDAR2015Dataset(BaseDataSet):
-    def __init__(self, data_path: list, img_model, pre_processes, filter_keys, transform=None, **kwargs):
-        super().__init__(data_path, img_model, pre_processes, transform)
+    def __init__(self, data_path: list, img_mode, pre_processes, filter_keys, transform=None, **kwargs):
+        super().__init__(data_path, img_mode, pre_processes, transform)
         self.filter_keys = filter_keys
 
     def __getitem__(self, index):
         data = self.data_list[index]
-        im = cv2.imread(data['img_path'], 1 if self.img_model != 'GRAY' else 0)
-        if self.img_model == 'RGB':
+        im = cv2.imread(data['img_path'], 1 if self.img_mode != 'GRAY' else 0)
+        if self.img_mode == 'RGB':
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         data['img'] = im
         data['shape'] = [im.shape[0], im.shape[1]]
         data = self.allpy_pre_processes(copy.deepcopy(data))
-        # img, shrink_label_map, threshold_label_map = image_label(im, gt, self.input_size, self.shrink_ratio, self.modules)
-        # img = draw_bbox(img,text_polys)
+
         if self.transform:
             data['img'] = self.transform(data['img'])
         data['text_polys'] = data['text_polys'].tolist()
