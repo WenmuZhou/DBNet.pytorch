@@ -1,0 +1,55 @@
+name: DBNet
+dataset:
+  'train':
+    'dataset':
+      type: ICDAR2015Dataset
+      args:
+        data_path:
+          - ''
+        pre_processes:
+          - type: IaaAugment
+            args:
+              - {'type':Fliplr, 'args':{'p':0.5}}
+              - {'type': Affine, 'args':{'rotate':[-10,10]}}
+              - {'type':Resize,'args':{'size':[0.5,3]}}
+          - type: EastRandomCropData
+            args:
+              size: [640,640]
+              max_tries: 50
+              keep_ratio: true
+          - type: MakeBorderMap
+            args:
+              shrink_ratio: 0.4
+          - type: MakeShrinkMap
+            args:
+              shrink_ratio: 0.4
+              min_text_size: 8
+        transforms:
+          - type: ToTensor
+            args: {}
+        img_model: 'RGB'
+        filter_keys: ['img_path','img_name','text_polys','texts','ignore_tags','shape']
+    loader:
+      batch_size: 1
+      shuffle: true
+      pin_memory: false
+      num_workers: 0
+      collate_fn: ''
+  'validate':
+    'dataset':
+      type: ICDAR2015Dataset
+      args:
+        data_path:
+          - ''
+        pre_processes:
+          - type: ResizeShortSize
+            args:
+              short_size: 736
+        img_model: 'RGB'
+        filter_keys: []
+    loader:
+      batch_size: 1
+      shuffle: true
+      pin_memory: false
+      num_workers: 0
+      collate_fn: ICDARCollectFN

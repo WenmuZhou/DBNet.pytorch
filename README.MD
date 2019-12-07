@@ -30,7 +30,7 @@ gt/ store gt file
 ```
 
 ## Train
-1. config the `train_data_path`,`val_data_path`in [config.json](config.json)
+1. config the `train_data_path`,`val_data_path`in [config.json](config/config_synthtext.json)
 2. use following script to run
 ```sh
 python3 train.py

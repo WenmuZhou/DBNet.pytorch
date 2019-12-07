@@ -3,9 +3,11 @@
 # @Author  : zhoujun
 
 import os
-import shutil
 import pathlib
+import shutil
 from pprint import pformat
+
+import anyconfig
 import torch
 from torch import nn
 
@@ -34,12 +36,10 @@ class BaseTrainer:
         # logger and tensorboard
         self.tensorboard_enable = self.config['trainer']['tensorboard']
         self.epochs = self.config['trainer']['epochs']
-        self.display_interval = self.config['trainer']['display_interval']
-        if self.tensorboard_enable:
-            from torch.utils.tensorboard import SummaryWriter
-            self.writer = SummaryWriter(self.save_dir)
+        self.los_iter = self.config['trainer']['los_iter']
 
-        self.logger = setup_logger(os.path.join(self.save_dir, 'train_log'))
+        anyconfig.dump(config, os.path.join(self.save_dir, 'config.yaml'))
+        self.logger = setup_logger(os.path.join(self.save_dir, 'train.log'))
         self.logger.info(pformat(self.config))
 
         # device
@@ -72,24 +72,21 @@ class BaseTrainer:
         if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
             self.scheduler = self._initialize('lr_scheduler', torch.optim.lr_scheduler, self.optimizer)
 
-        # 单机多卡
-        num_gpus = torch.cuda.device_count()
-        if num_gpus > 1:
-            self.model = nn.DataParallel(self.model)
-
         self.model.to(self.device)
 
         if self.tensorboard_enable:
+            from torch.utils.tensorboard import SummaryWriter
+            self.writer = SummaryWriter(self.save_dir)
             try:
                 # add graph
-                dummy_input = torch.zeros(1, self.config['data_loader']['args']['dataset']['img_channel'],
-                                          self.config['data_loader']['args']['dataset']['input_size'],
-                                          self.config['data_loader']['args']['dataset']['input_size']).to(self.device)
+                dummy_input = torch.zeros(1, 3, 640, 640).to(self.device)
                 self.writer.add_graph(self.model, dummy_input)
+                torch.cuda.empty_cache()
             except:
                 import traceback
-                # self.logger.error(traceback.format_exc())
+                self.logger.error(traceback.format_exc())
                 self.logger.warn('add graph to tensorboard failed')
+
 
     def train(self):
         """
@@ -115,7 +112,7 @@ class BaseTrainer:
         """
         raise NotImplementedError
 
-    def _eval(self):
+    def _eval(self, epoch):
         """
         eval logic for an epoch
 

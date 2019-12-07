@@ -3,30 +3,64 @@
 # @Author  : zhoujun
 
 from __future__ import print_function
+
+import argparse
 import os
-from utils import load_json
 
-config = load_json('config.json')
-os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in config['trainer']['gpus']])
+import anyconfig
 
-from models import get_model, get_loss
-from data_loader import get_dataloader
-from trainer import Trainer
+
+def init_args():
+    parser = argparse.ArgumentParser(description='DBNet.pytorch')
+    parser.add_argument('--config_path', default='config/icdar2015_resnet18_FPN_DBhead_polyLR.yaml', type=str)
+    parser.add_argument('--local_rank', dest='local_rank', default=0, type=int, help='Use distributed training')
+
+    args = parser.parse_args()
+    return args
 
 
 def main(config):
-    train_loader = get_dataloader(config['data_loader']['type'], config['data_loader']['args'])
+    import torch
+    from models import get_model, get_loss
+    from data_loader import get_dataloader
+    from trainer import Trainer
+    from post_processing import get_post_processing
+    from utils import get_metric
+    if len(config['trainer']['gpus']) > 1:
+        import torch.distributed as dist
+        config['trainer']['distributed'] = True
+        torch.cuda.set_device(args.local_rank)
+        dist.init_process_group(backend='nccl', init_method='env://')
+    else:
+        config['trainer']['distributed'] = False
+    train_loader = get_dataloader(config['dataset']['train'], config['trainer']['distributed'])
+    assert train_loader is not None
+    validate_loader = get_dataloader(config['dataset']['validate'])
 
-    criterion = get_loss(config).cuda()
+    criterion = get_loss(config['loss']).cuda()
 
-    model = get_model(config)
+    model = get_model(config['arch'], config['trainer']['distributed'], args.local_rank)
+
+    post_p = get_post_processing(config['post_processing'])
+    metric = get_metric(config['metric'])
 
     trainer = Trainer(config=config,
                       model=model,
                       criterion=criterion,
-                      train_loader=train_loader)
+                      train_loader=train_loader,
+                      post_process=post_p,
+                      metric_cls=metric,
+                      validate_loader=validate_loader)
     trainer.train()
 
 
 if __name__ == '__main__':
+    from utils import parse_config
+
+    args = init_args()
+    assert os.path.exists(args.config_path)
+    config = anyconfig.load(args.config_path)
+    if 'base' in config:
+        config = parse_config(config)
+    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join([str(i) for i in config['trainer']['gpus']])
     main(config)

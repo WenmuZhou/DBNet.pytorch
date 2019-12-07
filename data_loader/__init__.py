@@ -1,64 +1,96 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:52
 # @Author  : zhoujun
-
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
 import copy
 
+import PIL
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+from torchvision import transforms
+
 from utils import get_datalist
-from . import dataset
 
 
-def get_dataset(data_list, module_name, transform, dataset_args):
+def get_dataset(data_path, module_name, transform, dataset_args):
     """
     获取训练dataset
-    :param data_list: dataset文件列表，每个文件内以如下格式存储 ‘path/to/img\tlabel’
+    :param data_path: dataset文件列表，每个文件内以如下格式存储 ‘path/to/img\tlabel’
     :param module_name: 所使用的自定义dataset名称，目前只支持data_loaders.ImageDataset
     :param transform: 该数据集使用的transforms
     :param dataset_args: module_name的参数
     :return: 如果data_path列表不为空，返回对于的ConcatDataset对象，否则None
     """
-    s_dataset = getattr(dataset, module_name)(transform=transform, data_list=data_list,
+    from . import dataset
+    s_dataset = getattr(dataset, module_name)(transform=transform, data_path=data_path,
                                               **dataset_args)
     return s_dataset
 
 
-def train_val_split(ds, validation_split):
-    '''
-
-    :param ds: dataset
-    :return:
-    '''
-    try:
-        split = float(validation_split)
-    except:
-        raise RuntimeError('Train and val splitting ratio is invalid.')
-
-    val_len = int(split * len(ds))
-    train_len = len(ds) - val_len
-    train, val = random_split(ds, [train_len, val_len])
-    return train, val
+def get_transforms(transforms_config):
+    tr_list = []
+    for item in transforms_config:
+        if 'args' not in item:
+            args = {}
+        else:
+            args = item['args']
+        cls = getattr(transforms, item['type'])(**args)
+        tr_list.append(cls)
+    tr_list = transforms.Compose(tr_list)
+    return tr_list
 
 
-def get_dataloader(module_name, module_args):
-    train_transfroms = transforms.Compose([
-        transforms.ColorJitter(brightness=0.5),
-        transforms.ToTensor()
-    ])
+class ICDARCollectFN():
+    def __init__(self, *args, **kwargs):
+        self.to_tensor = transforms.ToTensor()
 
+    def __call__(self, batch):
+        data_dict = {}
+        to_tensor_keys = []
+        for sample in batch:
+            for k, v in sample.items():
+                if k not in data_dict:
+                    data_dict[k] = []
+                if isinstance(v, (np.ndarray, torch.Tensor, PIL.Image.Image)):
+                    v = self.to_tensor(v)
+                    if k not in to_tensor_keys:
+                        to_tensor_keys.append(k)
+                data_dict[k].append(v)
+        for k in to_tensor_keys:
+            data_dict[k] = torch.stack(data_dict[k], 0)
+        return data_dict
+
+
+def get_dataloader(module_config, distributed=False):
+    if module_config is None:
+        return None
+    config = copy.deepcopy(module_config)
+    dataset_args = config['dataset']['args']
+    if 'transforms' in dataset_args:
+        img_transfroms = get_transforms(dataset_args.pop('transforms'))
+    else:
+        img_transfroms = None
     # 创建数据集
-    dataset_args = copy.deepcopy(module_args['dataset'])
-    train_data_path = dataset_args.pop('train_data_path')
-    dataset_args.pop('val_data_path')
-    if module_name == 'ICDAR2015Dataset':
-        train_data_list = get_datalist(train_data_path)
-    elif module_name == 'SynthTextDataset':
-        train_data_list = train_data_path
+    dataset_name = config['dataset']['type']
+    data_path = dataset_args.pop('data_path')
+    if dataset_name == 'ICDAR2015Dataset':
+        data_path = get_datalist(data_path)
+    elif dataset_name == 'SynthTextDataset':
+        pass
     else:
         raise NotImplementedError
+    if 'collate_fn' not in config['loader'] or config['loader']['collate_fn'] is None or len(config['loader']['collate_fn']) == 0:
+        config['loader']['collate_fn'] = None
+    else:
+        config['loader']['collate_fn'] = eval(config['loader']['collate_fn'])()
 
-    train_dataset = get_dataset(data_list=train_data_list, module_name=module_name, transform=train_transfroms, dataset_args=dataset_args)
-    train_loader = DataLoader(dataset=train_dataset, batch_size=module_args['loader']['train_batch_size'],
-                              shuffle=module_args['loader']['shuffle'], num_workers=module_args['loader']['num_workers'])
-    return train_loader
+    _dataset = get_dataset(data_path=data_path, module_name=dataset_name, transform=img_transfroms, dataset_args=dataset_args)
+    if distributed:
+        from torch.utils.data.distributed import DistributedSampler
+        # 3）使用DistributedSampler
+        sampler = DistributedSampler(_dataset)
+        config['loader']['shuffle'] = False
+        loader = DataLoader(dataset=_dataset, sampler=sampler, **config['loader'])
+    else:
+        loader = DataLoader(dataset=_dataset, **config['loader'])
+    return loader

@@ -2,32 +2,37 @@
 # @Time    : 2019/8/23 21:58
 # @Author  : zhoujun
 import os
-import cv2
-import shutil
-import numpy as np
 import time
-from tqdm import tqdm
+
 import torch
 import torchvision.utils as vutils
-from torchvision import transforms
-from post_processing import decode_py as decode
-from utils import WarmupPolyLR, WarmupMultiStepLR, runningScore, cal_text_score, cal_recall_precison_f1
+from tqdm import tqdm
 
 from base import BaseTrainer
+from utils import WarmupPolyLR, runningScore, cal_text_score
 
 
 class Trainer(BaseTrainer):
-    def __init__(self, config, model, criterion, train_loader, weights_init=None):
+    def __init__(self, config, model, criterion, train_loader, validate_loader, metric_cls, post_process=None, weights_init=None):
         super(Trainer, self).__init__(config, model, criterion, weights_init)
-        self.show_images_interval = self.config['trainer']['show_images_interval']
-        self.test_path = self.config['data_loader']['args']['dataset']['val_data_path']
+        self.show_images_iter = self.config['trainer']['show_images_iter']
         self.train_loader = train_loader
+        if validate_loader is None:
+            assert post_process is not None and metric_cls is not None
+        self.validate_loader = validate_loader
+        self.post_process = post_process
+        self.metric_cls = metric_cls
         self.train_loader_len = len(train_loader)
         if self.config['lr_scheduler']['type'] == 'WarmupPolyLR':
-            base_lr = config['optimizer']['args']['lr']
-            self.scheduler = WarmupPolyLR(self.optimizer, target_lr=base_lr * 1e-2, max_iters=self.epochs * self.train_loader_len)
-
-        self.logger.info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader.dataset), self.train_loader_len))
+            warmup_iters = config['lr_scheduler']['args']['warmup_epoch'] * self.train_loader_len
+            self.scheduler = WarmupPolyLR(self.optimizer, max_iters=self.epochs * self.train_loader_len,
+                                          warmup_iters=warmup_iters, **config['lr_scheduler']['args'])
+        if self.validate_loader is not None:
+            self.logger.info(
+                'train dataset has {} samples,{} in dataloader, validate dataset has {} samples,{} in dataloader'.format(
+                    len(self.train_loader.dataset), self.train_loader_len, len(self.validate_loader.dataset), len(self.validate_loader)))
+        else:
+            self.logger.info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader.dataset), self.train_loader_len))
 
     def _train_epoch(self, epoch):
         self.model.train()
@@ -36,57 +41,67 @@ class Trainer(BaseTrainer):
         train_loss = 0.
         running_metric_text = runningScore(2)
         lr = self.optimizer.param_groups[0]['lr']
-        for i, (images, shrink_labels, threshold_labels) in enumerate(self.train_loader):
+
+        for i, batch in enumerate(self.train_loader):
             if i >= self.train_loader_len:
                 break
+            break
             self.global_step += 1
             lr = self.optimizer.param_groups[0]['lr']
 
             # 数据进行转换和丢到gpu
-            cur_batch_size = images.size()[0]
-            images, shrink_labels, threshold_labels = images.to(self.device), shrink_labels.to(self.device), threshold_labels.to(self.device)
+            for key, value in batch.items():
+                if value is not None:
+                    if isinstance(value, torch.Tensor):
+                        batch[key] = value.to(self.device)
+            cur_batch_size = batch['img'].size()[0]
 
-            preds = self.model(images)
-            loss_all, loss_shrink_map, loss_binary_map, loss_threshold_map = self.criterion(preds, shrink_labels, threshold_labels)
+            preds = self.model(batch['img'])
+            loss_dict = self.criterion(preds, batch)
             # backward
             self.optimizer.zero_grad()
-            loss_all.backward()
+            loss_dict['loss'].backward()
             self.optimizer.step()
             if self.config['lr_scheduler']['type'] == 'WarmupPolyLR':
                 self.scheduler.step()
             # acc iou
-            score_shrink_map = cal_text_score(preds[:, 0, :, :], shrink_labels, running_metric_text, thred=0.5)
+            score_shrink_map = cal_text_score(preds[:, 0, :, :], batch['shrink_map'], batch['shrink_mask'], running_metric_text, thred=0.5)
 
             # loss 和 acc 记录到日志
-            loss_all = loss_all.item()
-            loss_shrink_map = loss_shrink_map.item()
-            loss_binary_map = loss_binary_map.item()
-            loss_threshold_map = loss_threshold_map.item()
-            train_loss += loss_all
+            loss_str = 'loss: {:.4f}, '.format(loss_dict['loss'].item())
+            for idx, (key, value) in enumerate(loss_dict.items()):
+                loss_dict[key] = value.item()
+                if key == 'loss':
+                    continue
+                loss_str += '{}: {:.4f}'.format(key, loss_dict[key])
+                if idx < len(loss_dict) - 1:
+                    loss_str += ', '
+
+            train_loss += loss_dict['loss']
             acc = score_shrink_map['Mean Acc']
             iou_shrink_map = score_shrink_map['Mean IoU']
 
-            if (i + 1) % self.display_interval == 0:
+            if self.global_step % self.los_iter == 0:
                 batch_time = time.time() - batch_start
                 self.logger.info(
-                    '[{}/{}], [{}/{}], global_step: {}, Speed: {:.1f} samples/sec, acc: {:.4f}, iou_shrink_map: {:.4f}, loss_all: {:.4f}, loss_shrink_map: {:.4f}, loss_binary_map: {:.4f}, loss_threshold_map: {:.4f}, lr:{:.6}, time:{:.2f}'.format(
-                        epoch, self.epochs, i + 1, self.train_loader_len, self.global_step, self.display_interval * cur_batch_size / batch_time, acc,
-                        iou_shrink_map, loss_all, loss_shrink_map, loss_binary_map, loss_threshold_map, lr, batch_time))
+                    '[{}/{}], [{}/{}], global_step: {}, Speed: {:.1f} samples/sec, acc: {:.4f}, iou_shrink_map: {:.4f}, {}, lr:{:.6}, time:{:.2f}'.format(
+                        epoch, self.epochs, i + 1, self.train_loader_len, self.global_step, self.los_iter * cur_batch_size / batch_time, acc,
+                        iou_shrink_map, loss_str, lr, batch_time))
                 batch_start = time.time()
 
             if self.tensorboard_enable:
                 # write tensorboard
-                self.writer.add_scalar('TRAIN/LOSS/loss_all', loss_all, self.global_step)
-                self.writer.add_scalar('TRAIN/LOSS/loss_shrink_map', loss_shrink_map, self.global_step)
-                self.writer.add_scalar('TRAIN/LOSS/loss_binary_map', loss_binary_map, self.global_step)
-                self.writer.add_scalar('TRAIN/LOSS/loss_threshold_map', loss_threshold_map, self.global_step)
+                for key, value in loss_dict.items():
+                    self.writer.add_scalar('TRAIN/LOSS/{}'.format(key), value, self.global_step)
                 self.writer.add_scalar('TRAIN/ACC_IOU/acc', acc, self.global_step)
                 self.writer.add_scalar('TRAIN/ACC_IOU/iou_shrink_map', iou_shrink_map, self.global_step)
                 self.writer.add_scalar('TRAIN/lr', lr, self.global_step)
-                if i % self.show_images_interval == 0:
+                if self.global_step % self.show_images_iter == 0:
                     # show images on tensorboard
-                    self.writer.add_images('TRAIN/imgs', images, self.global_step)
+                    self.writer.add_images('TRAIN/imgs', batch['img'], self.global_step)
                     # shrink_labels and threshold_labels
+                    shrink_labels = batch['shrink_map']
+                    threshold_labels = batch['threshold_map']
                     shrink_labels[shrink_labels <= 0.5] = 0
                     shrink_labels[shrink_labels > 0.5] = 1
                     show_label = torch.cat([shrink_labels, threshold_labels])
@@ -95,8 +110,7 @@ class Trainer(BaseTrainer):
                                                   pad_value=1)
                     self.writer.add_image('TRAIN/gt', show_label, self.global_step)
                     # model output
-                    show_pred = torch.cat([preds[:, 0, :, :], preds[:, 1, :, :], preds[:, 2, :, :]])
-                    show_pred = vutils.make_grid(show_pred.unsqueeze(1), nrow=cur_batch_size, normalize=False,
+                    show_pred = vutils.make_grid(preds.reshape(-1, 1, *preds.shape[-2:]), nrow=cur_batch_size, normalize=False,
                                                  padding=20,
                                                  pad_value=1)
                     self.writer.add_image('TRAIN/preds', show_pred, self.global_step)
@@ -104,46 +118,27 @@ class Trainer(BaseTrainer):
         return {'train_loss': train_loss / self.train_loader_len, 'lr': lr, 'time': time.time() - epoch_start,
                 'epoch': epoch}
 
-    def _eval(self):
+    def _eval(self, epoch):
         self.model.eval()
         # torch.cuda.empty_cache()  # speed up evaluating after training finished
-        img_path = os.path.join(self.test_path, 'img')
-        gt_path = os.path.join(self.test_path, 'gt')
-        result_save_path = os.path.join(self.save_dir, 'result')
-        if os.path.exists(result_save_path):
-            shutil.rmtree(result_save_path, ignore_errors=True)
-        if not os.path.exists(result_save_path):
-            os.makedirs(result_save_path)
-        short_size = 736
-        # 预测所有测试图片
-        img_paths = [os.path.join(img_path, x) for x in os.listdir(img_path)]
-        for img_path in tqdm(img_paths, desc='test models'):
-            img_name = os.path.basename(img_path).split('.')[0]
-            save_name = os.path.join(result_save_path, 'res_' + img_name + '.txt')
-
-            assert os.path.exists(img_path), 'file is not exists'
-            img = cv2.imread(img_path)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            h, w = img.shape[:2]
-            scale = short_size / min(h, w)
-            img = cv2.resize(img, None, fx=scale, fy=scale)
-            # 将图片由(w,h)变为(1,img_channel,h,w)
-            tensor = transforms.ToTensor()(img)
-            tensor = tensor.unsqueeze_(0)
-
-            tensor = tensor.to(self.device)
+        test_save_path = os.path.join(self.save_dir, 'test_result_{}'.format(epoch))
+        if not os.path.exists(self.checkpoint_dir):
+            os.makedirs(self.checkpoint_dir)
+        os.makedirs(test_save_path)
+        raw_metrics = []
+        for i, batch in tqdm(enumerate(self.validate_loader), total=len(self.validate_loader), desc='test model'):
             with torch.no_grad():
-                torch.cuda.synchronize(self.device)
-                preds = self.model(tensor)[0]
-                torch.cuda.synchronize(self.device)
-                preds, boxes_list = decode(preds)
-                scale = (preds.shape[1] / w, preds.shape[0] / h)
-                if len(boxes_list):
-                    boxes_list = boxes_list / scale
-            np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
-        # 开始计算 recall precision f1
-        result_dict = cal_recall_precison_f1(gt_path=gt_path, result_path=result_save_path)
-        return result_dict['recall'], result_dict['precision'], result_dict['hmean']
+                # 数据进行转换和丢到gpu
+                for key, value in batch.items():
+                    if value is not None:
+                        if isinstance(value, torch.Tensor):
+                            batch[key] = value.to(self.device)
+                preds = self.model(batch['img'])
+                boxes, scores = self.post_process(batch, preds)
+                raw_metric = self.metric_cls.validate_measure(batch, (boxes, scores))
+                raw_metrics.append(raw_metric)
+        metrics = self.metric_cls.gather_measure(raw_metrics)
+        return metrics['recall'].avg, metrics['precision'].avg, metrics['fmeasure'].avg
 
     def _on_epoch_finish(self):
         self.logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
@@ -153,7 +148,7 @@ class Trainer(BaseTrainer):
 
         save_best = False
         if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标
-            recall, precision, hmean = self._eval()
+            recall, precision, hmean = self._eval(self.epoch_result['epoch'])
 
             if self.tensorboard_enable:
                 self.writer.add_scalar('EVAL/recall', recall, self.global_step)

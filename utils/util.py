@@ -42,17 +42,12 @@ def save_json(data, json_path):
         json.dump(data, f, indent=4)
 
 
-def load_json(json_path):
-    with open(json_path, mode='r', encoding='utf8') as f:
-        data = json.load(f)
-    return data
-
-
-def show_img(imgs: np.ndarray, color=False):
+def show_img(imgs: np.ndarray, title='img', color=False):
     if (len(imgs.shape) == 3 and color) or (len(imgs.shape) == 2 and not color):
         imgs = np.expand_dims(imgs, axis=0)
-    for img in imgs:
+    for i, img in enumerate(imgs):
         plt.figure()
+        plt.title('{}_{}'.format(title, i))
         plt.imshow(img, cmap=None if color else 'gray')
 
 
@@ -70,12 +65,13 @@ def draw_bbox(img_path, result, color=(255, 0, 0), thickness=2):
     return img_path
 
 
-def cal_text_score(texts, gt_texts, running_metric_text, thred=0.5):
-    pred_text = texts.data.cpu().numpy()
+def cal_text_score(texts, gt_texts, training_masks, running_metric_text, thred=0.5):
+    training_masks = training_masks.data.cpu().numpy()
+    pred_text = texts.data.cpu().numpy() * training_masks
     pred_text[pred_text <= thred] = 0
     pred_text[pred_text > thred] = 1
     pred_text = pred_text.astype(np.int32)
-    gt_text = gt_texts.data.cpu().numpy()
+    gt_text = gt_texts.data.cpu().numpy() * training_masks
     gt_text = gt_text.astype(np.int32)
     running_metric_text.update(gt_text, pred_text)
     score_text, _ = running_metric_text.get_scores()
@@ -101,6 +97,7 @@ def order_points_clockwise_list(pts):
     pts = np.array(pts)
     return pts
 
+
 def get_datalist(train_data_path):
     """
     获取训练和验证的数据list
@@ -118,6 +115,21 @@ def get_datalist(train_data_path):
                     if img_path.exists() and img_path.stat().st_size > 0 and label_path.exists() and label_path.stat().st_size > 0:
                         train_data.append((str(img_path), str(label_path)))
     return train_data
+
+
+def parse_config(config: dict) -> dict:
+    import anyconfig
+    base_file_list = config.pop('base')
+    base_config = {}
+    for base_file in base_file_list:
+        tmp_config = anyconfig.load(base_file)
+        if 'base' in tmp_config:
+            tmp_config = parse_config(tmp_config)
+        anyconfig.merge(tmp_config, base_config)
+        base_config = tmp_config
+    anyconfig.merge(base_config, config)
+    return base_config
+
 
 if __name__ == '__main__':
     log = setup_logger('1')

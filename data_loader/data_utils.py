@@ -7,9 +7,8 @@ import pyclipper
 import numpy as np
 import cv2
 from shapely.geometry import Polygon, Point
-from data_loader.augment import DataAugment
-
-data_aug = DataAugment()
+from data_loader.modules import *
+from utils import exe_time
 
 
 def check_and_validate_polys(polys, xxx_todo_changeme):
@@ -57,6 +56,7 @@ def quadratic(a, b, c):
         return x
 
 
+@exe_time
 def generate_threshold_label(threshold_label_map, poly, index):
     points = np.array(np.where(threshold_label_map == index)).transpose((1, 0))[:, ::-1]
     dis_list = []
@@ -105,17 +105,16 @@ def generate_rbox(im_size, text_polys, texts, shrink_ratio):
 
 def augmentation(im: np.ndarray, text_polys: np.ndarray, scales: np.ndarray, degrees: int) -> tuple:
     # the images are rescaled with ratio {0.5, 1.0, 2.0, 3.0} randomly
-    im, text_polys = data_aug.random_scale(im, text_polys, scales)
+    im, text_polys = random_scale(im, text_polys, scales)
     # the images are horizontally fliped and rotated in range [−10◦, 10◦] randomly
     if random.random() < 0.5:
-        im, text_polys = data_aug.horizontal_flip(im, text_polys)
+        im, text_polys = horizontal_flip(im, text_polys)
     if random.random() < 0.5:
-        im, text_polys = data_aug.random_rotate_img_bbox(im, text_polys, degrees)
+        im, text_polys = random_rotate_img_bbox(im, text_polys, degrees)
     return im, text_polys
 
 
-def image_label(im: np.ndarray, text_polys: np.ndarray, texts: list, input_size: int = 640,
-                shrink_ratio: float = 0.5, degrees: int = 10,
+def image_label(im: np.ndarray, gt, input_size: int = 640, shrink_ratio: float = 0.5, degrees: int = 10,
                 scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
     """
     读取图片并生成label
@@ -130,6 +129,7 @@ def image_label(im: np.ndarray, text_polys: np.ndarray, texts: list, input_size:
     """
     h, w, _ = im.shape
     # 检查越界
+    text_polys, texts, ignore_tag = gt
     text_polys = check_and_validate_polys(text_polys, (h, w))
     im, text_polys = augmentation(im, text_polys, scales, degrees)
 
@@ -144,7 +144,12 @@ def image_label(im: np.ndarray, text_polys: np.ndarray, texts: list, input_size:
     h, w, _ = im.shape
     shrink_label_map, threshold_label_map = generate_rbox((h, w), text_polys, texts, shrink_ratio)
     imgs = [im, shrink_label_map, threshold_label_map]
-    imgs = data_aug.random_crop(imgs, (input_size, input_size))
+    m = MakeBorderMap()
+    import time
+    tic = time.time()
+    data = m(data)
+    print(time.time() - tic)
+    # imgs = data_aug.random_crop(imgs, (input_size, input_size))
     return imgs[0], imgs[1], imgs[2]  # im, shrink_label_map, threshold_label_map
 
 

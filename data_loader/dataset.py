@@ -1,74 +1,87 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:54
 # @Author  : zhoujun
-import cv2
-import torch
+import copy
 import pathlib
+
+import cv2
 import numpy as np
-from PIL import Image
 import scipy.io as sio
-from torch.utils.data import Dataset, DataLoader
-from data_loader.data_utils import image_label
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader
+
+from base import BaseDataSet
 from utils import order_points_clockwise
 
 
-class ICDAR2015Dataset(Dataset):
-    def __init__(self, data_list: list, input_size: int, img_channel: int, shrink_ratio: float, transform=None,
-                 target_transform=None):
-        self.data_list = self.load_data(data_list)
-        self.input_size = input_size
-        self.img_channel = img_channel
-        self.transform = transform
-        self.target_transform = target_transform
-        self.shrink_ratio = shrink_ratio
+class ICDAR2015Dataset(BaseDataSet):
+    def __init__(self, data_path: list, img_model, pre_processes, filter_keys, transform=None, **kwargs):
+        super().__init__(data_path, img_model, pre_processes, transform)
+        self.filter_keys = filter_keys
 
     def __getitem__(self, index):
-        img_path, text_polys, texts = self.data_list[index]
-        im = cv2.imread(img_path, 1 if self.img_channel == 3 else 0)
-        if self.img_channel == 3:
+        data = self.data_list[index]
+        im = cv2.imread(data['img_path'], 1 if self.img_model != 'GRAY' else 0)
+        if self.img_model == 'RGB':
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        img, shrink_label_map, threshold_label_map = image_label(im, text_polys, texts, self.input_size,
-                                                                 self.shrink_ratio)
+        data['img'] = im
+        data['shape'] = [im.shape[0], im.shape[1]]
+        data = self.allpy_pre_processes(copy.deepcopy(data))
+        # img, shrink_label_map, threshold_label_map = image_label(im, gt, self.input_size, self.shrink_ratio, self.modules)
         # img = draw_bbox(img,text_polys)
-        img = Image.fromarray(img)
         if self.transform:
-            img = self.transform(img)
-        if self.target_transform:
-            shrink_label_map = self.target_transform(shrink_label_map)
-            threshold_label_map = self.target_transform(threshold_label_map)
-        return img, shrink_label_map, threshold_label_map
+            data['img'] = self.transform(data['img'])
+        data['text_polys'] = data['text_polys'].tolist()
+        if len(self.filter_keys):
+            data_dict = {}
+            for k, v in data.items():
+                if k not in self.filter_keys:
+                    data_dict[k] = v
+        else:
+            data_dict = data
+        return data_dict
 
     def load_data(self, data_list: list) -> list:
         t_data_list = []
         for img_path, label_path in data_list:
-            bboxs, text_tags = self._get_annotation(label_path)
-            if len(bboxs) > 0:
-                t_data_list.append((img_path, bboxs, text_tags))
+            data = self._get_annotation(label_path)
+            if len(data['text_polys']) > 0:
+                item = {'img_path': img_path, 'img_name': pathlib.Path(img_path).stem}
+                item.update(data)
+                t_data_list.append(item)
             else:
                 print('there is no suit bbox in {}'.format(label_path))
         return t_data_list
 
-    def _get_annotation(self, label_path: str) -> tuple:
+    def _get_annotation(self, label_path: str) -> dict:
         boxes = []
         texts = []
+        ignores = []
         with open(label_path, encoding='utf-8', mode='r') as f:
             for line in f.readlines():
                 params = line.strip().strip('\ufeff').strip('\xef\xbb\xbf').split(',')
                 try:
                     box = order_points_clockwise(np.array(list(map(float, params[:8]))).reshape(-1, 2))
-                    if cv2.arcLength(box, True) > 0:
+                    if cv2.contourArea(box) > 0:
                         boxes.append(box)
                         label = params[8]
                         texts.append(label)
+                        ignores.append(label in ['*', '###'])
                 except:
                     print('load label failed on {}'.format(label_path))
-        return np.array(boxes, dtype=np.float32), np.array(texts, dtype=np.bool)
+        data = {
+            'text_polys': np.array(boxes),
+            'texts': texts,
+            'ignore_tags': ignores,
+        }
+        return data
 
     def __len__(self):
         return len(self.data_list)
 
 
-class SynthTextDataset(Dataset):
+class SynthTextDataset(BaseDataSet):
 
     def __init__(self, data_list: str, input_size: int, img_channel: int, shrink_ratio: float, transform=None,
                  target_transform=None):
@@ -189,30 +202,58 @@ class Batch_Balanced_Dataset(object):
 
 
 if __name__ == '__main__':
-    from utils.util import show_img
     from tqdm import tqdm
     import matplotlib.pyplot as plt
     from torchvision import transforms
+    import anyconfig
+    from utils import get_datalist, parse_config
+    from utils.util import show_img
 
-    train_data = ICDAR2015Dataset(
-        data_list=[
-            (r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')],
-        input_size=640,
-        img_channel=3,
-        shrink_ratio=0.5,
-        transform=transforms.ToTensor()
-    )
-    train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
+    import PIL
+
+
+    class ICDARCollectFN():
+        def __init__(self, *args, **kwargs):
+            self.to_tensor = transforms.ToTensor()
+
+        def __call__(self, batch):
+            data_dict = {}
+            to_tensor_keys = []
+            for sample in batch:
+                for k, v in sample.items():
+                    if k not in data_dict:
+                        data_dict[k] = []
+                    if isinstance(v, (np.ndarray, torch.Tensor, PIL.Image.Image)):
+                        v = self.to_tensor(v)
+                        if k not in to_tensor_keys:
+                            to_tensor_keys.append(k)
+                    data_dict[k].append(v)
+            for k in to_tensor_keys:
+                data_dict[k] = torch.stack(data_dict[k], 0)
+            return data_dict
+
+
+    config = anyconfig.load('E:\zj\code\DBNet.pytorch\config\icdar2015_resnet18_fpn_DBhead_polyLR.yaml')
+    config = parse_config(config)
+    dataset_args = config['dataset']['train']['dataset']['args']
+    # dataset_args.pop('data_path')
+    # data_list = [(r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')]
+    data_list = get_datalist(dataset_args.pop('data_path'))
+    train_data = ICDAR2015Dataset(data_path=data_list, transform=None, **dataset_args)
+    icdar_collate_fn = ICDARCollectFN()
+    train_loader = DataLoader(dataset=train_data, batch_size=2, shuffle=False, collate_fn=icdar_collate_fn, num_workers=0)
 
     pbar = tqdm(total=len(train_loader))
-    for i, (img, shrink_label_map, threshold_label_map) in enumerate(train_loader):
-        print(shrink_label_map.shape, shrink_label_map[0][0].max())
-        print(img.shape)
-        print(shrink_label_map[0][-1].sum())
-        # pbar.update(1)
-        show_img((img[0].to(torch.float)).numpy().transpose(1, 2, 0), color=True)
-        show_img((shrink_label_map[0].to(torch.float)).numpy(), color=False)
-        show_img((threshold_label_map[0].to(torch.float)).numpy(), color=False)
-        plt.show()
+    for i, data in enumerate(train_loader):
+        # img = data['img']
+        # shrink_label = data['shrink_map']
+        # threshold_label = data['threshold_map']
+        # print(threshold_label.shape, threshold_label.shape, img.shape)
+        pbar.update(1)
+        # show_img((img[0].to(torch.float)).numpy().transpose(1, 2, 0), title='img', color=True)
+        # show_img((shrink_label[0].to(torch.float)).numpy(), title='shrink_label', color=False)
+        # show_img((threshold_label[0].to(torch.float)).numpy(), title='threshold_label', color=False)
+        # show_img(((threshold_label + shrink_label)[0].to(torch.float)).numpy(), title='threshold_label+threshold_label', color=False)
+        # plt.show()
 
     pbar.close()

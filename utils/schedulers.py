@@ -1,9 +1,10 @@
 """Popular Learning Rate Schedulers"""
 from __future__ import division
-import math
-import torch
 
+import math
 from bisect import bisect_right
+
+import torch
 
 __all__ = ['LRScheduler', 'WarmupMultiStepLR', 'WarmupPolyLR']
 
@@ -109,7 +110,7 @@ class LRScheduler(object):
 # reference: https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/maskrcnn_benchmark/solver/lr_scheduler.py
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(self, optimizer, milestones, gamma=0.1, warmup_factor=1.0 / 3,
-                 warmup_iters=500, warmup_method="linear", last_epoch=-1):
+                 warmup_iters=500, warmup_method="linear", last_epoch=-1, **kwargs):
         super(WarmupMultiStepLR, self).__init__(optimizer, last_epoch)
         if not list(milestones) == sorted(milestones):
             raise ValueError(
@@ -138,7 +139,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
 
 class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(self, optimizer, target_lr=0, max_iters=0, power=0.9, warmup_factor=1.0 / 3,
-                 warmup_iters=500, warmup_method='linear', last_epoch=-1):
+                 warmup_iters=500, warmup_method='linear', last_epoch=-1, **kwargs):
         if warmup_method not in ("constant", "linear"):
             raise ValueError(
                 "Only 'constant' or 'linear' warmup_method accepted "
@@ -168,18 +169,21 @@ class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
         factor = pow(1 - T / N, self.power)
         return [self.target_lr + (base_lr - self.target_lr) * factor for base_lr in self.base_lrs]
 
+
 if __name__ == '__main__':
     import torch
     from torchvision.models import resnet18
+
     max_iter = 600 * 63
     model = resnet18()
-    op = torch.optim.SGD(model.parameters(),1e-3)
-    sc = WarmupPolyLR(op,target_lr=1e-3 * 1e-2,max_iters=max_iter,power=0.9)
+    op = torch.optim.SGD(model.parameters(), 1e-3)
+    sc = WarmupPolyLR(op, max_iters=max_iter, power=0.9, warmup_iters=3 * 63, warmup_method='constant')
     lr = []
     for i in range(max_iter):
         sc.step()
-        print(i,sc.last_epoch,sc.get_lr()[0])
+        print(i, sc.last_epoch, sc.get_lr()[0])
         lr.append(sc.get_lr()[0])
     from matplotlib import pyplot as plt
-    plt.plot(list(range(max_iter)),lr)
+
+    plt.plot(list(range(max_iter)), lr)
     plt.show()
