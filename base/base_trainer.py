@@ -86,7 +86,9 @@ class BaseTrainer:
                 import traceback
                 self.logger.error(traceback.format_exc())
                 self.logger.warn('add graph to tensorboard failed')
-
+        # 分布式训练
+        if torch.cuda.device_count() > 1:
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model)
         # make inverse Normalize
         self.UN_Normalize = False
         for t in self.config['dataset']['train']['dataset']['args']['transforms']:

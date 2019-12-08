@@ -26,20 +26,17 @@ def main(config):
     from trainer import Trainer
     from post_processing import get_post_processing
     from utils import get_metric
-    if len(config['trainer']['gpus']) > 1:
+    if torch.cuda.device_count() > 1:
         import torch.distributed as dist
-        config['trainer']['distributed'] = True
         torch.cuda.set_device(args.local_rank)
         dist.init_process_group(backend='nccl', init_method='env://')
-    else:
-        config['trainer']['distributed'] = False
-    train_loader = get_dataloader(config['dataset']['train'], config['trainer']['distributed'])
+    train_loader = get_dataloader(config['dataset']['train'])
     assert train_loader is not None
     validate_loader = get_dataloader(config['dataset']['validate'])
 
     criterion = get_loss(config['loss']).cuda()
 
-    model = get_model(config['arch'], config['trainer']['distributed'], args.local_rank)
+    model = get_model(config['arch'])
 
     post_p = get_post_processing(config['post_processing'])
     metric = get_metric(config['metric'])

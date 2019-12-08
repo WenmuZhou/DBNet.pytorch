@@ -50,8 +50,8 @@ trainer:
   tensorboard: true
   metrics: hmean
 dataset:
-  'train':
-    'dataset':
+  train:
+    dataset:
       args:
         data_path:
           - 'E:\zj\dataset\icdar2015\train\train.txt'
@@ -62,8 +62,8 @@ dataset:
       pin_memory: true
       num_workers: 6
       collate_fn: ''
-  'validate':
-    'dataset':
+  validate:
+    dataset:
       args:
         data_path:
           - 'E:\zj\dataset\icdar2015\test\test.txt'

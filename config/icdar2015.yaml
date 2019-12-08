@@ -1,7 +1,7 @@
 name: DBNet
 dataset:
-  'train':
-    'dataset':
+  train:
+    dataset:
       type: ICDAR2015Dataset # 数据集类型
       args:
         data_path: # 一个存放 img_path \t gt_path的文件
@@ -39,8 +39,8 @@ dataset:
       pin_memory: false
       num_workers: 0
       collate_fn: ''
-  'validate':
-    'dataset':
+  validate:
+    dataset:
       type: ICDAR2015Dataset
       args:
         data_path:
