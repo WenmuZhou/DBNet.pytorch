@@ -60,7 +60,7 @@ class ICDARCollectFN():
         return data_dict
 
 
-def get_dataloader(module_config, distributed):
+def get_dataloader(module_config, distributed=False):
     if module_config is None:
         return None
     config = copy.deepcopy(module_config)
@@ -90,7 +90,7 @@ def get_dataloader(module_config, distributed):
         sampler = DistributedSampler(_dataset, shuffle=config['loader']['shuffle'])
         config['loader']['shuffle'] = False
         config['loader']['pin_memory'] = True
-        loader = DataLoader(dataset=_dataset, sampler=sampler, **config['loader'])
+        loader = DataLoader(dataset=_dataset, sampler=sampler, **config['loader'], )
     else:
         loader = DataLoader(dataset=_dataset, **config['loader'])
     return loader

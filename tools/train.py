@@ -28,11 +28,11 @@ def main(config):
     from utils import get_metric
     if torch.cuda.device_count() > 1:
         torch.cuda.set_device(args.local_rank)
-        torch.distributed.init_process_group(backend="nccl", init_method="env://")
+        torch.distributed.init_process_group(backend="nccl", init_method="env://", world_size=torch.cuda.device_count(), rank=args.local_rank)
         config['distributed'] = True
-        config['local_rank'] = args.local_rank
     else:
         config['distributed'] = False
+    config['local_rank'] = args.local_rank
 
     train_loader = get_dataloader(config['dataset']['train'], config['distributed'])
     assert train_loader is not None
