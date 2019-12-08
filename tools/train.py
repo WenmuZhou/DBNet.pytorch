@@ -30,7 +30,7 @@ def main(config):
         torch.cuda.set_device(args.local_rank)
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
         config['distributed'] = True
-        config.local_rank = args.local_rank
+        config['local_rank'] = args.local_rank
     else:
         config['distributed'] = False
 
