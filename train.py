@@ -27,12 +27,16 @@ def main(config):
     from post_processing import get_post_processing
     from utils import get_metric
     if torch.cuda.device_count() > 1:
-        import torch.distributed as dist
         torch.cuda.set_device(args.local_rank)
-        dist.init_process_group(backend='nccl', init_method='env://')
-    train_loader = get_dataloader(config['dataset']['train'])
+        torch.distributed.init_process_group(backend="nccl", init_method="env://")
+        config['distributed'] = True
+        config.local_rank = args.local_rank
+    else:
+        config['distributed'] = False
+
+    train_loader = get_dataloader(config['dataset']['train'], config['distributed'])
     assert train_loader is not None
-    validate_loader = get_dataloader(config['dataset']['validate'])
+    validate_loader = get_dataloader(config['dataset']['validate'], config['distributed'])
 
     criterion = get_loss(config['loss']).cuda()
 

@@ -60,7 +60,7 @@ class ICDARCollectFN():
         return data_dict
 
 
-def get_dataloader(module_config):
+def get_dataloader(module_config, distributed):
     if module_config is None:
         return None
     config = copy.deepcopy(module_config)
@@ -84,7 +84,7 @@ def get_dataloader(module_config):
         config['loader']['collate_fn'] = eval(config['loader']['collate_fn'])()
 
     _dataset = get_dataset(data_path=data_path, module_name=dataset_name, transform=img_transfroms, dataset_args=dataset_args)
-    if torch.cuda.device_count() > 1:
+    if distributed:
         from torch.utils.data.distributed import DistributedSampler
         # 3）使用DistributedSampler
         sampler = DistributedSampler(_dataset, shuffle=config['loader']['shuffle'])

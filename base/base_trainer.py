@@ -48,7 +48,7 @@ class BaseTrainer:
             torch.backends.cudnn.benchmark = True
             self.logger.info('train with gpu {} and pytorch {}'.format(self.config['trainer']['gpus'], torch.__version__))
             self.gpus = {i: item for i, item in enumerate(self.config['trainer']['gpus'])}
-            self.device = torch.device("cuda:0")
+            self.device = torch.device("cuda")
             torch.cuda.manual_seed(self.config['trainer']['seed'])  # 为当前GPU设置随机种子
             torch.cuda.manual_seed_all(self.config['trainer']['seed'])  # 为所有GPU设置随机种子
         else:
@@ -88,7 +88,8 @@ class BaseTrainer:
                 self.logger.warn('add graph to tensorboard failed')
         # 分布式训练
         if torch.cuda.device_count() > 1:
-            self.model = torch.nn.parallel.DistributedDataParallel(self.model)
+            local_rank = config['local_rank']
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[local_rank], output_device=local_rank)
         # make inverse Normalize
         self.UN_Normalize = False
         for t in self.config['dataset']['train']['dataset']['args']['transforms']:
