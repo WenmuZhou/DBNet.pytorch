@@ -43,19 +43,16 @@ class BaseTrainer:
 
         # device
         torch.manual_seed(self.config['trainer']['seed'])  # 为CPU设置随机种子
-        if len(self.config['trainer']['gpus']) > 0 and torch.cuda.is_available():
+        if torch.cuda.device_count() > 0 and torch.cuda.is_available():
             self.with_cuda = True
             torch.backends.cudnn.benchmark = True
-            self.logger.info('train with gpu {} and pytorch {}'.format(self.config['trainer']['gpus'], torch.__version__))
-            self.gpus = {i: item for i, item in enumerate(self.config['trainer']['gpus'])}
             self.device = torch.device("cuda")
             torch.cuda.manual_seed(self.config['trainer']['seed'])  # 为当前GPU设置随机种子
             torch.cuda.manual_seed_all(self.config['trainer']['seed'])  # 为所有GPU设置随机种子
         else:
             self.with_cuda = False
-            self.logger.info('train with cpu and pytorch {}'.format(torch.__version__))
             self.device = torch.device("cpu")
-        self.logger.info('device {}'.format(self.device))
+        self.logger.info('train with device {} and pytorch {}'.format(self.device, torch.__version__))
         # metrics
         self.metrics = {'recall': 0, 'precision': 0, 'hmean': 0, 'train_loss': float('inf'), 'best_model': ''}
 
@@ -135,24 +132,6 @@ class BaseTrainer:
 
     def _on_train_finish(self):
         raise NotImplementedError
-
-    def _log_memory_usage(self):
-        if not self.with_cuda:
-            return
-
-        template = """Memory Usage: \n{}"""
-        usage = []
-        for deviceID, device in self.gpus.items():
-            deviceID = int(deviceID)
-            allocated = torch.cuda.memory_allocated(deviceID) / (1024 * 1024)
-            cached = torch.cuda.memory_cached(deviceID) / (1024 * 1024)
-
-            usage.append('    CUDA: {}  Allocated: {} MB Cached: {} MB \n'.format(device, allocated, cached))
-
-        content = ''.join(usage)
-        content = template.format(content)
-
-        self.logger.debug(content)
 
     def _save_checkpoint(self, epoch, file_name, save_best=False):
         """

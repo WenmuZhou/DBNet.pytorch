@@ -55,6 +55,11 @@ def init_args():
 
 
 if __name__ == '__main__':
+    import sys
+
+    project = 'DBNet.pytorch'  # 工作项目根目录
+    sys.path.append(os.getcwd().split(project)[0] + project)
+
     args = init_args()
 
     save_folder = main(args.model_path, args.img_folder, args.save_folder, gpu_id=0)
