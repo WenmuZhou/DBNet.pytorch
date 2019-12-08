@@ -72,6 +72,9 @@ only train on ICDAR2015 dataset
 TBD
 
 
+### todo
+- [ ] mutil gpu training
+
 ### reference
 1. https://arxiv.org/pdf/1911.08947.pdf
 2. https://github.com/WenmuZhou/PANet.pytorch
