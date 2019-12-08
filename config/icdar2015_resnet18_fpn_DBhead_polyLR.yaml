@@ -40,7 +40,6 @@ lr_scheduler:
     warmup_epoch: 3
 trainer:
   seed: 2
-  gpus: [0]
   epochs: 600
   los_iter: 10
   show_images_iter: 50

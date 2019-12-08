@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
 
-    model_path = 'output/DBNet_resnet18_FPN_DBHead/checkpoint/DBNet_latest.pth'
+    model_path = '../output/DBNet_resnet18_FPN_DBHead/checkpoint/DBNet_latest.pth'
 
     img_id = 10
     img_path = 'E:/zj/dataset/icdar2015/test/img/img_{}.jpg'.format(img_id)

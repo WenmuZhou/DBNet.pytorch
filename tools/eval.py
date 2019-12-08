@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2018/6/11 15:54
 # @Author  : zhoujun
+import argparse
 import os
-import cv2
-import torch
 import shutil
+
+import cv2
 import numpy as np
+import torch
 from tqdm.auto import tqdm
-from predict import Pytorch_model
-from utils import cal_recall_precison_f1, draw_bbox
+
+from tools.predict import Pytorch_model
+from utils import draw_bbox,cal_recall_precison_f1
 
 torch.backends.cudnn.benchmark = True
-
 
 def main(model_path, img_folder, save_path, gpu_id):
     if os.path.exists(save_path):
@@ -41,14 +43,20 @@ def main(model_path, img_folder, save_path, gpu_id):
     return save_txt_folder
 
 
-if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    model_path = r'output/PAN_shufflenetv2_FPEM_FFM.pth'
-    img_path = r'/mnt/e/zj/dataset/icdar2015/test/img'
-    gt_path = r'/mnt/e/zj/dataset/icdar2015/test/gt'
-    save_path = './output/result'#model_path.replace('checkpoint/best_model.pth', 'result/')
-    gpu_id = 0
+def init_args():
+    parser = argparse.ArgumentParser(description='DBNet.pytorch')
+    parser.add_argument('--model_path', required=True, type=str)
+    parser.add_argument('--img_folder', required=True, type=str)
+    parser.add_argument('--gt_folder', required=True, type=str)
+    parser.add_argument('--save_folder', required=True, type=str)
 
-    save_path = main(model_path, img_path, save_path, gpu_id=gpu_id)
-    result = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
+    args = parser.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+    args = init_args()
+
+    save_folder = main(args.model_path, args.img_folder, args.save_folder, gpu_id=0)
+    result = cal_recall_precison_f1(gt_path=args.gt_folder, result_path=save_folder)
     print(result)

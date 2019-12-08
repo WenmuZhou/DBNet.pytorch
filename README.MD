@@ -29,27 +29,37 @@ img/ store img
 gt/ store gt file
 ```
 
-## Train
-1. config the `train_data_path`,`val_data_path`in [config.json](config/config_synthtext.json)
-2. use following script to run
-```sh
-python3 train.py
-```
+## Install
+```bash
+# build deformable convolution opertor
+cd models/modules/dcn
+python setup.py build_ext --inplace
 
+```
+## Train
+1. config the `dataset['train']['dataset'['data_path']'`,`dataset['validate']['dataset'['data_path']`in [config/icdar2015_resnet18_fpn_DBhead_polyLR.yaml](cconfig/icdar2015_resnet18_fpn_DBhead_polyLR.yaml)
+2. single gpu train
+```bash
+bash singlel_gpu_train.sh
+```
+3. Multi-gpu training
+```bash
+bash multi_gpu_train.sh
+```
 ## Test
 
-[eval.py](eval.py) is used to test model on test dataset
+[eval.py](tools/eval.py) is used to test model on test dataset
 
-1. config `model_path`, `img_path`, `gt_path`, `save_path` in [eval.py](eval.py)
+1. config `model_path`, `img_folder`, `gt_folder`, `save_folder` in [eval.sh](eval.sh)
 2. use following script to test
-```sh
-python3 eval.py
+```bash
+bash eval.sh
 ```
 
 ## Predict 
-[predict.py](predict.py) is used to inference on single image
+[predict.py](tools/predict.py) is used to inference on single image
 
-1. config `model_path`, `img_path`, in [predict.py](predict.py)
+1. config `model_path`, `img_path`, in [predict.py](tools/predict.py)
 2. use following script to predict
 ```sh
 python3 predict.py
