@@ -46,8 +46,7 @@ class BaseTrainer:
         if len(self.config['trainer']['gpus']) > 0 and torch.cuda.is_available():
             self.with_cuda = True
             torch.backends.cudnn.benchmark = True
-            self.logger.info(
-                'train with gpu {} and pytorch {}'.format(self.config['trainer']['gpus'], torch.__version__))
+            self.logger.info('train with gpu {} and pytorch {}'.format(self.config['trainer']['gpus'], torch.__version__))
             self.gpus = {i: item for i, item in enumerate(self.config['trainer']['gpus'])}
             self.device = torch.device("cuda:0")
             torch.cuda.manual_seed(self.config['trainer']['seed'])  # 为当前GPU设置随机种子

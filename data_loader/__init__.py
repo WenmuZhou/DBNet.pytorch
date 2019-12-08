@@ -43,6 +43,7 @@ def get_transforms(transforms_config):
 class ICDARCollectFN():
     def __init__(self, *args, **kwargs):
         pass
+
     def __call__(self, batch):
         data_dict = {}
         to_tensor_keys = []
@@ -86,8 +87,9 @@ def get_dataloader(module_config, distributed=False):
     if distributed:
         from torch.utils.data.distributed import DistributedSampler
         # 3）使用DistributedSampler
-        sampler = DistributedSampler(_dataset)
+        sampler = DistributedSampler(_dataset, shuffle=config['loader']['shuffle'])
         config['loader']['shuffle'] = False
+        config['loader']['pin_memory'] = True
         loader = DataLoader(dataset=_dataset, sampler=sampler, **config['loader'])
     else:
         loader = DataLoader(dataset=_dataset, **config['loader'])

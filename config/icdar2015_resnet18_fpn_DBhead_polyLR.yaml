@@ -1,5 +1,5 @@
 name: DBNet
-base: ['E:\zj\code\DBNet.pytorch\config\icdar2015.yaml']
+base: ['config\icdar2015.yaml']
 arch:
   type: DBModel
   args:
