@@ -5,7 +5,7 @@
 [中文解读](https://zhuanlan.zhihu.com/p/94677957)
 
 
-![network](imgs/paper/db.png)
+![network](imgs/paper/db.jpg)
 
 ## Install
 ```bash
