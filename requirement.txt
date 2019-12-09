@@ -1,0 +1,15 @@
+anyconfig==0.9.10
+future==0.18.2
+imgaug==0.3.0
+matplotlib==3.1.2
+numpy==1.17.4
+opencv-python==4.1.2.30
+Polygon3==3.0.8
+pyclipper==1.1.0.post3
+PyYAML==5.2
+scikit-image==0.16.2
+Shapely==1.6.4.post2
+tensorboard==2.1.0
+torch==1.2.0
+torchvision==0.4.0
+tqdm==4.40.1

@@ -7,11 +7,32 @@
 
 ![network](imgs/paper/db.png)
 
+## Install
+```bash
+conda create --name DBNet.pytorch -y
+conda activate DBNet.pytorch
+
+conda install ipython pip
+
+# python dependencies
+pip install -r requirement.txt
+
+# install PyTorch with cuda-10.1
+conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
+
+# clone repo
+git clone https://github.com/WenmuZhou/DBNet.pytorch.git
+cd DBNet.pytorch/
+
+# build deformable convolution opertor
+cd models/modules/dcn
+python setup.py build_ext --inplace
+```
+
 ## Requirements
 * pytorch 1.1+
 * torchvision 0.3+
-* pyclipper
-* opencv3
+* gcc 4.9+
 
 ## Download
 
@@ -31,13 +52,6 @@ img/ store img
 gt/ store gt file
 ```
 
-## Install
-```bash
-# build deformable convolution opertor
-cd models/modules/dcn
-python setup.py build_ext --inplace
-
-```
 ## Train
 1. config the `dataset['train']['dataset'['data_path']'`,`dataset['validate']['dataset'['data_path']`in [config/icdar2015_resnet18_fpn_DBhead_polyLR.yaml](cconfig/icdar2015_resnet18_fpn_DBhead_polyLR.yaml)
 2. single gpu train
