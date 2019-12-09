@@ -1,5 +1,7 @@
 # Real-time Scene Text Detection with Differentiable Binarization
 
+note: some code is inherited from [MhLiao/DB](https://github.com/MhLiao/DB)
+
 [中文解读](https://zhuanlan.zhihu.com/p/94677957)
 
 
@@ -88,5 +90,6 @@ TBD
 ### reference
 1. https://arxiv.org/pdf/1911.08947.pdf
 2. https://github.com/WenmuZhou/PANet.pytorch
+3. https://github.com/MhLiao/DB
 
 **If this repository helps you，please star it. Thanks.**
