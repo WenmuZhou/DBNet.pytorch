@@ -107,7 +107,7 @@ class SegDetectorRepresenter():
         scores = np.zeros((num_contours,), dtype=np.float32)
 
         for index in range(num_contours):
-            contour = contours[index]
+            contour = contours[index].squeeze(1)
             points, sside = self.get_mini_boxes(contour)
             if sside < self.min_size:
                 continue
@@ -157,8 +157,7 @@ class SegDetectorRepresenter():
             index_2 = 3
             index_3 = 2
 
-        box = [points[index_1], points[index_2],
-               points[index_3], points[index_4]]
+        box = [points[index_1], points[index_2], points[index_3], points[index_4]]
         return box, min(bounding_box[1])
 
     def box_score_fast(self, bitmap, _box):

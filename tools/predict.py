@@ -33,7 +33,6 @@ class Pytorch_model:
         config['arch']['args']['pretrained'] = False
         self.net = get_model(config['arch'])
         self.post_process = get_post_processing(config['post_processing'])
-        config['dataset']['train']['dataset']['args']['img_mode'] = config['dataset']['train']['dataset']['args']['img_model']
         self.img_mode = config['dataset']['train']['dataset']['args']['img_mode']
         self.net.load_state_dict(checkpoint['state_dict'])
         self.net.to(self.device)
@@ -77,7 +76,7 @@ class Pytorch_model:
             idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0
             box_list, score_list = box_list[idx], score_list[idx]
             t = time.time() - start
-        return preds[0, 0, :, :].detach().cpu().numpy().transpose((1, 2, 0)), box_list, t
+        return preds[0, 0, :, :].detach().cpu().numpy(), box_list, t
 
 
 if __name__ == '__main__':
@@ -96,5 +95,5 @@ if __name__ == '__main__':
     preds, boxes_list, t = model.predict(img_path)
     show_img(preds)
     img = draw_bbox(cv2.imread(img_path)[:, :, ::-1], boxes_list)
-    show_img(img, color=True)
+    show_img(img)
     plt.show()

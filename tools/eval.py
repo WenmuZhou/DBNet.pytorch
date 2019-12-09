@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2018/6/11 15:54
 # @Author  : zhoujun
-import argparse
 import os
-import shutil
+import sys
+
+project = 'DBNet.pytorch'  # 工作项目根目录
+sys.path.append(os.getcwd().split(project)[0] + project)
 
 import cv2
+import shutil
+import argparse
+
 import numpy as np
 import torch
 from tqdm.auto import tqdm
@@ -55,11 +60,6 @@ def init_args():
 
 
 if __name__ == '__main__':
-    import sys
-
-    project = 'DBNet.pytorch'  # 工作项目根目录
-    sys.path.append(os.getcwd().split(project)[0] + project)
-
     args = init_args()
 
     save_folder = main(args.model_path, args.img_folder, args.save_folder, gpu_id=0)
