@@ -70,6 +70,7 @@ dataset:
           - type: ResizeShortSize
             args:
               short_size: 736
+              resize_text_polys: false
         img_mode: 'RGB'
     loader:
       batch_size: 1

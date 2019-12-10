@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:58
 # @Author  : zhoujun
-import os
 import time
 
 import torch
@@ -25,6 +24,8 @@ class Trainer(BaseTrainer):
         self.train_loader_len = len(train_loader)
         if self.config['lr_scheduler']['type'] == 'WarmupPolyLR':
             warmup_iters = config['lr_scheduler']['args']['warmup_epoch'] * self.train_loader_len
+            if self.start_epoch > 1:
+                self.config['lr_scheduler']['args']['last_epoch'] = (self.start_epoch - 1) * self.train_loader_len
             self.scheduler = WarmupPolyLR(self.optimizer, max_iters=self.epochs * self.train_loader_len,
                                           warmup_iters=warmup_iters, **config['lr_scheduler']['args'])
         if self.validate_loader is not None:
@@ -121,6 +122,8 @@ class Trainer(BaseTrainer):
         self.model.eval()
         # torch.cuda.empty_cache()  # speed up evaluating after training finished
         raw_metrics = []
+        total_frame = 0.0
+        total_time = 0.0
         for i, batch in tqdm(enumerate(self.validate_loader), total=len(self.validate_loader), desc='test model'):
             with torch.no_grad():
                 # 数据进行转换和丢到gpu
@@ -128,18 +131,22 @@ class Trainer(BaseTrainer):
                     if value is not None:
                         if isinstance(value, torch.Tensor):
                             batch[key] = value.to(self.device)
+                start = time.time()
                 preds = self.model(batch['img'])
                 boxes, scores = self.post_process(batch, preds)
+                total_frame += batch['img'].size()[0]
+                total_time += time.time() - start
                 raw_metric = self.metric_cls.validate_measure(batch, (boxes, scores))
                 raw_metrics.append(raw_metric)
         metrics = self.metric_cls.gather_measure(raw_metrics)
+        self.logger.info('FPS:{}', format(total_frame / total_time))
         return metrics['recall'].avg, metrics['precision'].avg, metrics['fmeasure'].avg
 
     def _on_epoch_finish(self):
         self.logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
             self.epoch_result['epoch'], self.epochs, self.epoch_result['train_loss'], self.epoch_result['time'],
             self.epoch_result['lr']))
-        net_save_path = '{}/DBNet_latest.pth'.format(self.checkpoint_dir)
+        net_save_path = '{}/model_latest.pth'.format(self.checkpoint_dir)
 
         save_best = False
         if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标

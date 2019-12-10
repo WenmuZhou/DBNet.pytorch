@@ -164,7 +164,7 @@ class BaseTrainer:
         :param checkpoint_path: Checkpoint path to be resumed
         """
         self.logger.info("Loading checkpoint: {} ...".format(checkpoint_path))
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
         self.model.load_state_dict(checkpoint['state_dict'], strict=resume)
         if resume:
             self.global_step = checkpoint['global_step']

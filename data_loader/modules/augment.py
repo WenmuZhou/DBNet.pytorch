@@ -2,10 +2,11 @@
 # @Time    : 2019/8/23 21:52
 # @Author  : zhoujun
 
-import cv2
-import numbers
 import math
+import numbers
 import random
+
+import cv2
 import numpy as np
 from skimage.util import random_noise
 
@@ -184,12 +185,13 @@ class RandomResize:
 
 
 class ResizeShortSize:
-    def __init__(self, short_size):
+    def __init__(self, short_size, resize_text_polys=True):
         """
         :param size: resize尺寸,数字或者list的形式，如果为list形式，就是[w,h]
         :return:
         """
         self.short_size = short_size
+        self.resize_text_polys = resize_text_polys
 
     def __call__(self, data: dict) -> dict:
         """
@@ -206,7 +208,8 @@ class ResizeShortSize:
             # 保证短边 >= inputsize
             scale = self.short_size / short_edge
             im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
-            text_polys *= scale
+            if self.resize_text_polys:
+                text_polys *= scale
 
         data['img'] = im
         data['text_polys'] = text_polys

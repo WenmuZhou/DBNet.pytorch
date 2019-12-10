@@ -49,6 +49,7 @@ dataset:
           - type: ResizeShortSize
             args:
               short_size: 736
+              resize_text_polys: false
         transforms:
           - type: ToTensor
             args: {}

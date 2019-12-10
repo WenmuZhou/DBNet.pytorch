@@ -31,12 +31,12 @@ class Pytorch_model:
 
         config = checkpoint['config']
         config['arch']['args']['pretrained'] = False
-        self.net = get_model(config['arch'])
+        self.model = get_model(config['arch'])
         self.post_process = get_post_processing(config['post_processing'])
         self.img_mode = config['dataset']['train']['dataset']['args']['img_mode']
-        self.net.load_state_dict(checkpoint['state_dict'])
-        self.net.to(self.device)
-        self.net.eval()
+        self.model.load_state_dict(checkpoint['state_dict'])
+        self.model.to(self.device)
+        self.model.eval()
 
         self.transform = []
         for t in config['dataset']['train']['dataset']['args']['transforms']:
@@ -68,13 +68,16 @@ class Pytorch_model:
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
             start = time.time()
-            preds = self.net(tensor)
+            preds = self.model(tensor)
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
             box_list, score_list = self.post_process(batch, preds)
             box_list, score_list = box_list[0], score_list[0]
-            idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0
-            box_list, score_list = box_list[idx], score_list[idx]
+            if box_list.size > 0:
+                idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0
+                box_list, score_list = box_list[idx], score_list[idx]
+            else:
+                box_list, score_list = [], []
             t = time.time() - start
         return preds[0, 0, :, :].detach().cpu().numpy(), box_list, t
 
