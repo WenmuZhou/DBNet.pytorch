@@ -98,15 +98,12 @@ class BaseTrainer:
         Full training logic
         """
         for epoch in range(self.start_epoch, self.epochs + 1):
-            try:
-                if self.config['distributed']:
-                    self.train_loader.sampler.set_epoch(epoch)
-                self.epoch_result = self._train_epoch(epoch)
-                if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
-                    self.scheduler.step()
-                self._on_epoch_finish()
-            except torch.cuda.CudaError:
-                self._log_memory_usage()
+            if self.config['distributed']:
+                self.train_loader.sampler.set_epoch(epoch)
+            self.epoch_result = self._train_epoch(epoch)
+            if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
+                self.scheduler.step()
+            self._on_epoch_finish()
         if self.tensorboard_enable:
             self.writer.close()
         self._on_train_finish()
