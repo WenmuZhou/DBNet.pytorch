@@ -84,13 +84,12 @@ def get_dataloader(module_config, distributed=False):
         config['loader']['collate_fn'] = eval(config['loader']['collate_fn'])()
 
     _dataset = get_dataset(data_path=data_path, module_name=dataset_name, transform=img_transfroms, dataset_args=dataset_args)
+    sampler = None
     if distributed:
         from torch.utils.data.distributed import DistributedSampler
         # 3）使用DistributedSampler
-        sampler = DistributedSampler(_dataset, shuffle=config['loader']['shuffle'])
+        sampler = DistributedSampler(_dataset)
         config['loader']['shuffle'] = False
         config['loader']['pin_memory'] = True
-        loader = DataLoader(dataset=_dataset, sampler=sampler, **config['loader'], )
-    else:
-        loader = DataLoader(dataset=_dataset, **config['loader'])
+    loader = DataLoader(dataset=_dataset, sampler=sampler, **config['loader'])
     return loader

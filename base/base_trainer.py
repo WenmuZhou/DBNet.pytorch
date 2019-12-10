@@ -14,7 +14,7 @@ from utils import setup_logger
 
 
 class BaseTrainer:
-    def __init__(self, config, model, criterion, weights_init):
+    def __init__(self, config, model, criterion):
         config['trainer']['output_dir'] = os.path.join(str(pathlib.Path(os.path.abspath(__name__)).parent),
                                                        config['trainer']['output_dir'])
         config['name'] = config['name'] + '_' + model.name
@@ -29,7 +29,6 @@ class BaseTrainer:
         self.global_step = 0
         self.start_epoch = 1
         self.config = config
-
         self.model = model
         self.criterion = criterion
         # logger and tensorboard
@@ -63,9 +62,7 @@ class BaseTrainer:
             self._laod_checkpoint(self.config['trainer']['resume_checkpoint'], resume=True)
         elif self.config['trainer']['finetune_checkpoint'] != '':
             self._laod_checkpoint(self.config['trainer']['finetune_checkpoint'], resume=False)
-        else:
-            if weights_init is not None:
-                model.apply(weights_init)
+
         if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
             self.scheduler = self._initialize('lr_scheduler', torch.optim.lr_scheduler, self.optimizer)
 
@@ -86,7 +83,8 @@ class BaseTrainer:
         # 分布式训练
         if torch.cuda.device_count() > 1:
             local_rank = config['local_rank']
-            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[local_rank], output_device=local_rank)
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[local_rank], output_device=local_rank, broadcast_buffers=False,
+                                                                   find_unused_parameters=True)
         # make inverse Normalize
         self.UN_Normalize = False
         for t in self.config['dataset']['train']['dataset']['args']['transforms']:
@@ -101,6 +99,8 @@ class BaseTrainer:
         """
         for epoch in range(self.start_epoch, self.epochs + 1):
             try:
+                if self.config['distributed']:
+                    self.train_loader.sampler.set_epoch(epoch)
                 self.epoch_result = self._train_epoch(epoch)
                 if self.config['lr_scheduler']['type'] != 'WarmupPolyLR':
                     self.scheduler.step()

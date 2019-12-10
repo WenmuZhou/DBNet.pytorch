@@ -57,6 +57,7 @@ def main(config):
 
 if __name__ == '__main__':
     import sys
+
     project = 'DBNet.pytorch'  # 工作项目根目录
     sys.path.append(os.getcwd().split(project)[0] + project)
 

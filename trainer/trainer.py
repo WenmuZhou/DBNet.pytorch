@@ -12,8 +12,8 @@ from utils import WarmupPolyLR, runningScore, cal_text_score
 
 
 class Trainer(BaseTrainer):
-    def __init__(self, config, model, criterion, train_loader, validate_loader, metric_cls, post_process=None, weights_init=None):
-        super(Trainer, self).__init__(config, model, criterion, weights_init)
+    def __init__(self, config, model, criterion, train_loader, validate_loader, metric_cls, post_process=None):
+        super(Trainer, self).__init__(config, model, criterion)
         self.show_images_iter = self.config['trainer']['show_images_iter']
         self.train_loader = train_loader
         if validate_loader is None:
@@ -139,7 +139,7 @@ class Trainer(BaseTrainer):
                 raw_metric = self.metric_cls.validate_measure(batch, (boxes, scores))
                 raw_metrics.append(raw_metric)
         metrics = self.metric_cls.gather_measure(raw_metrics)
-        self.logger.info('FPS:{}', format(total_frame / total_time))
+        self.logger.info('FPS:{}'.format(total_frame / total_time))
         return metrics['recall'].avg, metrics['precision'].avg, metrics['fmeasure'].avg
 
     def _on_epoch_finish(self):
@@ -149,28 +149,29 @@ class Trainer(BaseTrainer):
         net_save_path = '{}/model_latest.pth'.format(self.checkpoint_dir)
 
         save_best = False
-        if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标
-            recall, precision, hmean = self._eval(self.epoch_result['epoch'])
+        if self.config['local_rank'] == 0:
+            if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标
+                recall, precision, hmean = self._eval(self.epoch_result['epoch'])
 
-            if self.tensorboard_enable:
-                self.writer.add_scalar('EVAL/recall', recall, self.global_step)
-                self.writer.add_scalar('EVAL/precision', precision, self.global_step)
-                self.writer.add_scalar('EVAL/hmean', hmean, self.global_step)
-            self.logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, hmean))
+                if self.tensorboard_enable:
+                    self.writer.add_scalar('EVAL/recall', recall, self.global_step)
+                    self.writer.add_scalar('EVAL/precision', precision, self.global_step)
+                    self.writer.add_scalar('EVAL/hmean', hmean, self.global_step)
+                self.logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, hmean))
 
-            if hmean > self.metrics['hmean']:
-                save_best = True
-                self.metrics['train_loss'] = self.epoch_result['train_loss']
-                self.metrics['hmean'] = hmean
-                self.metrics['precision'] = precision
-                self.metrics['recall'] = recall
-                self.metrics['best_model'] = net_save_path
-        else:
-            if self.epoch_result['train_loss'] < self.metrics['train_loss']:
-                save_best = True
-                self.metrics['train_loss'] = self.epoch_result['train_loss']
-                self.metrics['best_model'] = net_save_path
-        self._save_checkpoint(self.epoch_result['epoch'], net_save_path, save_best)
+                if hmean > self.metrics['hmean']:
+                    save_best = True
+                    self.metrics['train_loss'] = self.epoch_result['train_loss']
+                    self.metrics['hmean'] = hmean
+                    self.metrics['precision'] = precision
+                    self.metrics['recall'] = recall
+                    self.metrics['best_model'] = net_save_path
+            else:
+                if self.epoch_result['train_loss'] < self.metrics['train_loss']:
+                    save_best = True
+                    self.metrics['train_loss'] = self.epoch_result['train_loss']
+                    self.metrics['best_model'] = net_save_path
+            self._save_checkpoint(self.epoch_result['epoch'], net_save_path, save_best)
 
     def _on_train_finish(self):
         for k, v in self.metrics.items():
