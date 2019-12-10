@@ -99,7 +99,7 @@ TBD
 
 
 ### todo
-- [ ] mutil gpu training
+- [x] mutil gpu training
 
 ### reference
 1. https://arxiv.org/pdf/1911.08947.pdf
