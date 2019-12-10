@@ -29,11 +29,11 @@ class Trainer(BaseTrainer):
             self.scheduler = WarmupPolyLR(self.optimizer, max_iters=self.epochs * self.train_loader_len,
                                           warmup_iters=warmup_iters, **config['lr_scheduler']['args'])
         if self.validate_loader is not None:
-            self.logger.info(
+            self.logger_info(
                 'train dataset has {} samples,{} in dataloader, validate dataset has {} samples,{} in dataloader'.format(
                     len(self.train_loader.dataset), self.train_loader_len, len(self.validate_loader.dataset), len(self.validate_loader)))
         else:
-            self.logger.info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader.dataset), self.train_loader_len))
+            self.logger_info('train dataset has {} samples,{} in dataloader'.format(len(self.train_loader.dataset), self.train_loader_len))
 
     def _train_epoch(self, epoch):
         self.model.train()
@@ -65,7 +65,8 @@ class Trainer(BaseTrainer):
             if self.config['lr_scheduler']['type'] == 'WarmupPolyLR':
                 self.scheduler.step()
             # acc iou
-            score_shrink_map = cal_text_score(preds[:, 0, :, :], batch['shrink_map'], batch['shrink_mask'], running_metric_text, thred=0.5)
+            score_shrink_map = cal_text_score(preds[:, 0, :, :], batch['shrink_map'], batch['shrink_mask'], running_metric_text,
+                                              thred=self.config['post_processing']['args']['thresh'])
 
             # loss 和 acc 记录到日志
             loss_str = 'loss: {:.4f}, '.format(loss_dict['loss'].item())
@@ -83,13 +84,13 @@ class Trainer(BaseTrainer):
 
             if self.global_step % self.los_iter == 0:
                 batch_time = time.time() - batch_start
-                self.logger.info(
+                self.logger_info(
                     '[{}/{}], [{}/{}], global_step: {}, Speed: {:.1f} samples/sec, acc: {:.4f}, iou_shrink_map: {:.4f}, {}, lr:{:.6}, time:{:.2f}'.format(
                         epoch, self.epochs, i + 1, self.train_loader_len, self.global_step, self.los_iter * cur_batch_size / batch_time, acc,
                         iou_shrink_map, loss_str, lr, batch_time))
                 batch_start = time.time()
 
-            if self.tensorboard_enable:
+            if self.tensorboard_enable and self.config['local_rank'] == 0:
                 # write tensorboard
                 for key, value in loss_dict.items():
                     self.writer.add_scalar('TRAIN/LOSS/{}'.format(key), value, self.global_step)
@@ -139,11 +140,11 @@ class Trainer(BaseTrainer):
                 raw_metric = self.metric_cls.validate_measure(batch, (boxes, scores))
                 raw_metrics.append(raw_metric)
         metrics = self.metric_cls.gather_measure(raw_metrics)
-        self.logger.info('FPS:{}'.format(total_frame / total_time))
+        self.logger_info('FPS:{}'.format(total_frame / total_time))
         return metrics['recall'].avg, metrics['precision'].avg, metrics['fmeasure'].avg
 
     def _on_epoch_finish(self):
-        self.logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
+        self.logger_info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
             self.epoch_result['epoch'], self.epochs, self.epoch_result['train_loss'], self.epoch_result['time'],
             self.epoch_result['lr']))
         net_save_path = '{}/model_latest.pth'.format(self.checkpoint_dir)
@@ -157,7 +158,7 @@ class Trainer(BaseTrainer):
                     self.writer.add_scalar('EVAL/recall', recall, self.global_step)
                     self.writer.add_scalar('EVAL/precision', precision, self.global_step)
                     self.writer.add_scalar('EVAL/hmean', hmean, self.global_step)
-                self.logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, hmean))
+                self.logger_info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, hmean))
 
                 if hmean > self.metrics['hmean']:
                     save_best = True
@@ -175,5 +176,5 @@ class Trainer(BaseTrainer):
 
     def _on_train_finish(self):
         for k, v in self.metrics.items():
-            self.logger.info('{}:{}'.format(k, v))
-        self.logger.info('finish train')
+            self.logger_info('{}:{}'.format(k, v))
+        self.logger_info('finish train')

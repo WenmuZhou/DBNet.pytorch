@@ -38,7 +38,7 @@ class BaseTrainer:
 
         anyconfig.dump(config, os.path.join(self.save_dir, 'config.yaml'))
         self.logger = setup_logger(os.path.join(self.save_dir, 'train.log'))
-        self.logger.info(pformat(self.config))
+        self.logger_info(pformat(self.config))
 
         # device
         torch.manual_seed(self.config['trainer']['seed'])  # 为CPU设置随机种子
@@ -51,7 +51,7 @@ class BaseTrainer:
         else:
             self.with_cuda = False
             self.device = torch.device("cpu")
-        self.logger.info('train with device {} and pytorch {}'.format(self.device, torch.__version__))
+        self.logger_info('train with device {} and pytorch {}'.format(self.device, torch.__version__))
         # metrics
         self.metrics = {'recall': 0, 'precision': 0, 'hmean': 0, 'train_loss': float('inf'), 'best_model': ''}
 
@@ -68,7 +68,7 @@ class BaseTrainer:
 
         self.model.to(self.device)
 
-        if self.tensorboard_enable:
+        if self.tensorboard_enable and config['local_rank'] == 0:
             from torch.utils.tensorboard import SummaryWriter
             self.writer = SummaryWriter(self.save_dir)
             try:
@@ -141,10 +141,11 @@ class BaseTrainer:
         :param log: logging information of the epoch
         :param save_best: if True, rename the saved checkpoint to 'model_best.pth.tar'
         """
+        state_dict = self.model.module.state_dict() if self.config['distributed'] else self.model.state_dict()
         state = {
             'epoch': epoch,
             'global_step': self.global_step,
-            'state_dict': self.model.state_dict(),
+            'state_dict': state_dict,
             'optimizer': self.optimizer.state_dict(),
             'scheduler': self.scheduler.state_dict(),
             'config': self.config,
@@ -154,16 +155,16 @@ class BaseTrainer:
         torch.save(state, filename)
         if save_best:
             shutil.copy(filename, os.path.join(self.checkpoint_dir, 'model_best.pth'))
-            self.logger.info("Saving current best: {}".format(file_name))
+            self.logger_info("Saving current best: {}".format(file_name))
         else:
-            self.logger.info("Saving checkpoint: {}".format(filename))
+            self.logger_info("Saving checkpoint: {}".format(filename))
 
     def _laod_checkpoint(self, checkpoint_path, resume):
         """
         Resume from saved checkpoints
         :param checkpoint_path: Checkpoint path to be resumed
         """
-        self.logger.info("Loading checkpoint: {} ...".format(checkpoint_path))
+        self.logger_info("Loading checkpoint: {} ...".format(checkpoint_path))
         checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
         self.model.load_state_dict(checkpoint['state_dict'], strict=resume)
         if resume:
@@ -179,9 +180,9 @@ class BaseTrainer:
                     for k, v in state.items():
                         if isinstance(v, torch.Tensor):
                             state[k] = v.to(self.device)
-            self.logger.info("resume from checkpoint {} (epoch {})".format(checkpoint_path, self.start_epoch))
+            self.logger_info("resume from checkpoint {} (epoch {})".format(checkpoint_path, self.start_epoch))
         else:
-            self.logger.info("finetune from checkpoint {}".format(checkpoint_path))
+            self.logger_info("finetune from checkpoint {}".format(checkpoint_path))
 
     def _initialize(self, name, module, *args, **kwargs):
         module_name = self.config[name]['type']
@@ -195,3 +196,7 @@ class BaseTrainer:
             batch_img[:, 0, :, :] = batch_img[:, 0, :, :] * self.normalize_std[0] + self.normalize_mean[0]
             batch_img[:, 1, :, :] = batch_img[:, 1, :, :] * self.normalize_std[1] + self.normalize_mean[1]
             batch_img[:, 2, :, :] = batch_img[:, 2, :, :] * self.normalize_std[2] + self.normalize_mean[2]
+
+    def logger_info(self, s):
+        if self.config['local_rank'] == 0:
+            self.logger.info(s)

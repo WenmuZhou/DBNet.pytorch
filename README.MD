@@ -66,7 +66,7 @@ bash multi_gpu_train.sh
 
 [eval.py](tools/eval.py) is used to test model on test dataset
 
-1. config `model_path`, `img_folder`, `gt_folder`, `save_folder` in [eval.sh](eval.sh)
+1. config `model_path` in [eval.sh](eval.sh)
 2. use following script to test
 ```bash
 bash eval.sh

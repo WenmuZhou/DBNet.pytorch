@@ -73,7 +73,7 @@ class Pytorch_model:
                 torch.cuda.synchronize(self.device)
             box_list, score_list = self.post_process(batch, preds)
             box_list, score_list = box_list[0], score_list[0]
-            if box_list.size > 0:
+            if len(box_list) > 0:
                 idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0
                 box_list, score_list = box_list[idx], score_list[idx]
             else:

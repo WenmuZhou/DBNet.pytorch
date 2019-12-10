@@ -35,7 +35,7 @@ class EVAL():
         self.post_process = get_post_processing(config['post_processing'])
         self.metric_cls = get_metric(config['metric'])
 
-    def _eval(self):
+    def eval(self):
         self.model.eval()
         # torch.cuda.empty_cache()  # speed up evaluating after training finished
         raw_metrics = []

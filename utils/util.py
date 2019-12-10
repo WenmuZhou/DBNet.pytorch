@@ -23,7 +23,6 @@ def setup_logger(log_file_path: str = None):
         file_handle.setFormatter(formatter)
         logger.addHandler(file_handle)
     logger.setLevel(logging.DEBUG)
-    logger.info('logger init finished')
     return logger
 
 
