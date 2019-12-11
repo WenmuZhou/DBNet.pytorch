@@ -36,7 +36,10 @@ def main(config):
 
     train_loader = get_dataloader(config['dataset']['train'], config['distributed'])
     assert train_loader is not None
-    validate_loader = get_dataloader(config['dataset']['validate'], False)
+    if 'validate' in config['dataset']:
+        validate_loader = get_dataloader(config['dataset']['validate'], False)
+    else:
+        validate_loader = None
 
     criterion = get_loss(config['loss']).cuda()
 

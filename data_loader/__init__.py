@@ -9,9 +9,6 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from utils import get_datalist
-
-
 def get_dataset(data_path, module_name, transform, dataset_args):
     """
     获取训练dataset
@@ -72,12 +69,7 @@ def get_dataloader(module_config, distributed=False):
     # 创建数据集
     dataset_name = config['dataset']['type']
     data_path = dataset_args.pop('data_path')
-    if dataset_name == 'ICDAR2015Dataset':
-        data_path = get_datalist(data_path)
-    elif dataset_name == 'SynthTextDataset':
-        pass
-    else:
-        raise NotImplementedError
+
     if 'collate_fn' not in config['loader'] or config['loader']['collate_fn'] is None or len(config['loader']['collate_fn']) == 0:
         config['loader']['collate_fn'] = None
     else:

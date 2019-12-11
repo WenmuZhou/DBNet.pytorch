@@ -1,5 +1,5 @@
 name: DBNet
-base: ['config/icdar2015.yaml']
+base: ['config/SynthText.yaml']
 arch:
   type: DBModel
   args:
@@ -52,8 +52,7 @@ dataset:
   train:
     dataset:
       args:
-        data_path:
-          - 'E:\zj\dataset\icdar2015\train\train.txt'
+        data_path: 'E:\zj\dataset\SynthText\SynthText'
         img_mode: 'RGB'
     loader:
       batch_size: 2
@@ -61,20 +60,3 @@ dataset:
       pin_memory: true
       num_workers: 6
       collate_fn: ''
-  validate:
-    dataset:
-      args:
-        data_path:
-          - 'E:\zj\dataset\icdar2015\test\test.txt'
-        pre_processes:
-          - type: ResizeShortSize
-            args:
-              short_size: 736
-              resize_text_polys: false
-        img_mode: 'RGB'
-    loader:
-      batch_size: 1
-      shuffle: true
-      pin_memory: false
-      num_workers: 6
-      collate_fn: ICDARCollectFN
