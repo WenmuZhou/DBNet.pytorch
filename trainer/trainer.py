@@ -149,8 +149,8 @@ class Trainer(BaseTrainer):
             self.epoch_result['lr']))
         net_save_path = '{}/model_latest.pth'.format(self.checkpoint_dir)
 
-        save_best = False
         if self.config['local_rank'] == 0:
+            save_best = False
             if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标
                 recall, precision, hmean = self._eval(self.epoch_result['epoch'])
 
@@ -166,12 +166,10 @@ class Trainer(BaseTrainer):
                     self.metrics['hmean'] = hmean
                     self.metrics['precision'] = precision
                     self.metrics['recall'] = recall
-                    self.metrics['best_model'] = net_save_path
             else:
                 if self.epoch_result['train_loss'] < self.metrics['train_loss']:
                     save_best = True
                     self.metrics['train_loss'] = self.epoch_result['train_loss']
-                    self.metrics['best_model'] = net_save_path
             self._save_checkpoint(self.epoch_result['epoch'], net_save_path, save_best)
 
     def _on_train_finish(self):
