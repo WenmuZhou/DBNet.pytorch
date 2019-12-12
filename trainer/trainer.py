@@ -46,6 +46,7 @@ class Trainer(BaseTrainer):
         for i, batch in enumerate(self.train_loader):
             if i >= self.train_loader_len:
                 break
+            break
             self.global_step += 1
             lr = self.optimizer.param_groups[0]['lr']
 
@@ -151,7 +152,7 @@ class Trainer(BaseTrainer):
 
         if self.config['local_rank'] == 0:
             save_best = False
-            if self.config['trainer']['metrics'] == 'hmean':  # 使用f1作为最优模型指标
+            if self.validate_loader is not None and self.metric_cls is not None:  # 使用f1作为最优模型指标
                 recall, precision, hmean = self._eval(self.epoch_result['epoch'])
 
                 if self.tensorboard_enable:
@@ -160,14 +161,14 @@ class Trainer(BaseTrainer):
                     self.writer.add_scalar('EVAL/hmean', hmean, self.global_step)
                 self.logger_info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, hmean))
 
-                if hmean > self.metrics['hmean']:
+                if hmean >= self.metrics['hmean']:
                     save_best = True
                     self.metrics['train_loss'] = self.epoch_result['train_loss']
                     self.metrics['hmean'] = hmean
                     self.metrics['precision'] = precision
                     self.metrics['recall'] = recall
             else:
-                if self.epoch_result['train_loss'] < self.metrics['train_loss']:
+                if self.epoch_result['train_loss'] <= self.metrics['train_loss']:
                     save_best = True
                     self.metrics['train_loss'] = self.epoch_result['train_loss']
             self._save_checkpoint(self.epoch_result['epoch'], net_save_path, save_best)

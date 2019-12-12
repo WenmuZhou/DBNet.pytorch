@@ -40,6 +40,7 @@ def main(config):
         validate_loader = get_dataloader(config['dataset']['validate'], False)
     else:
         validate_loader = None
+    validate_loader = None
 
     criterion = get_loss(config['loss']).cuda()
 

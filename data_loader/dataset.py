@@ -8,7 +8,7 @@ import numpy as np
 import scipy.io as sio
 
 from base import BaseDataSet
-from utils import order_points_clockwise,get_datalist
+from utils import order_points_clockwise, get_datalist
 
 
 class ICDAR2015Dataset(BaseDataSet):
@@ -80,7 +80,7 @@ class SynthTextDataset(BaseDataSet):
             text_polys = wordBBoxes.reshape([8, numOfWords], order='F').T  # num_words * 8
             text_polys = text_polys.reshape(numOfWords, 4, 2)  # num_of_words * 4 * 2
 
-            if isinstance(texts,str):
+            if isinstance(texts, str):
                 transcripts = texts.split()
             else:
                 transcripts = [word for line in texts for word in line.split()]
@@ -93,6 +93,7 @@ class SynthTextDataset(BaseDataSet):
             t_data_list.append(item)
         return t_data_list
 
+
 if __name__ == '__main__':
     import torch
     from tqdm.auto import tqdm
@@ -102,25 +103,34 @@ if __name__ == '__main__':
     # from mxnet.gluon.data import DataLoader
     # from mxnet.gluon.data.vision import transforms
 
-    from utils import parse_config,show_img,plt
+    from utils import parse_config, show_img, plt
+
     config = anyconfig.load('config/icdar2015_resnet18_FPN_DBhead_polyLR.yaml')
     config = parse_config(config)
     dataset_args = config['dataset']['train']['dataset']['args']
     # dataset_args.pop('data_path')
     # data_list = [(r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')]
     train_data = ICDAR2015Dataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(), **dataset_args)
-    train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True, num_workers=0)
-    for e in range(100):
-        for i, data in enumerate(tqdm(train_loader)):
-            img = data['img']
-            shrink_label = data['shrink_map']
-            threshold_label = data['threshold_map']
-            print(threshold_label.shape, threshold_label.shape, img.shape)
-            show_img(img[0].numpy().transpose(1, 2, 0), title='img')
-            show_img((shrink_label[0].to(torch.float)).numpy(), title='shrink_label')
-            show_img((threshold_label[0].to(torch.float)).numpy(), title='threshold_label')
-            show_img(((threshold_label + shrink_label)[0].to(torch.float)).numpy(), title='threshold_label+threshold_label')
-            plt.show()
-            pass
-            if i> 20:
-                break
+    train_loader = DataLoader(dataset=train_data, batch_size=16, shuffle=True, num_workers=0)
+    for i, data in enumerate(tqdm(train_loader)):
+        # img = data['img']
+        # shrink_label = data['shrink_map']
+        # threshold_label = data['threshold_map']
+        #
+        # print(threshold_label.shape, threshold_label.shape, img.shape)
+        # show_img(img[0].numpy().transpose(1, 2, 0), title='img')
+        # show_img((shrink_label[0].to(torch.float)).numpy(), title='shrink_label')
+        # show_img((threshold_label[0].to(torch.float)).numpy(), title='threshold_label')
+        # show_img(((threshold_label + shrink_label)[0].to(torch.float)).numpy(), title='threshold_label+threshold_label')
+        # plt.show()
+        # pass
+        # 数据进行转换和丢到gpu
+        for key, value in data.items():
+            if value is not None:
+                if isinstance(value, torch.Tensor):
+                    data[key] = value.to(torch.device('cuda'))
+        assert (data['img'] != data['img']).sum() == 0
+        assert (data['shrink_map'] != data['shrink_map']).sum() == 0
+        assert (data['shrink_mask'] != data['shrink_mask']).sum() == 0
+        assert (data['threshold_map'] != data['threshold_map']).sum() == 0
+        assert (data['threshold_mask'] != data['threshold_mask']).sum() == 0

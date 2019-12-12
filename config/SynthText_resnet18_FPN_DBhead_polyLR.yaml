@@ -47,7 +47,6 @@ trainer:
   finetune_checkpoint: ''
   output_dir: output
   tensorboard: true
-  metrics: hmean
 dataset:
   train:
     dataset:
