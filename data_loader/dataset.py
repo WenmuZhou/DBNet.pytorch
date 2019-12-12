@@ -79,12 +79,9 @@ class SynthTextDataset(BaseDataSet):
             _, _, numOfWords = wordBBoxes.shape
             text_polys = wordBBoxes.reshape([8, numOfWords], order='F').T  # num_words * 8
             text_polys = text_polys.reshape(numOfWords, 4, 2)  # num_of_words * 4 * 2
-
-            if isinstance(texts, str):
-                transcripts = texts.split()
-            else:
-                transcripts = [word for line in texts for word in line.split()]
-            assert len(text_polys) == len(transcripts)
+            transcripts = [word for line in texts for word in line.split()]
+            if numOfWords != len(transcripts):
+                continue
             item['img_path'] = str(self.dataRoot / imageName)
             item['img_name'] = (self.dataRoot / imageName).stem
             item['text_polys'] = text_polys
