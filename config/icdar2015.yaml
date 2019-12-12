@@ -31,8 +31,8 @@ dataset:
             args:
               mean: [0.485, 0.456, 0.406]
               std: [0.229, 0.224, 0.225]
-        img_mode: 'RGB'
-        filter_keys: ['img_path','img_name','text_polys','texts','ignore_tags','shape'] # 返回数据之前，从数据字典里删除的key
+        img_mode: RGB
+        filter_keys: [img_path,img_name,text_polys,texts,ignore_tags,shape] # 返回数据之前，从数据字典里删除的key
     loader:
       batch_size: 1
       shuffle: true
@@ -57,7 +57,7 @@ dataset:
             args:
               mean: [0.485, 0.456, 0.406]
               std: [0.229, 0.224, 0.225]
-        img_mode: 'RGB'
+        img_mode: RGB
         filter_keys: []
     loader:
       batch_size: 1
