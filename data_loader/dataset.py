@@ -120,4 +120,3 @@ if __name__ == '__main__':
         # show_img(img, title='draw_bbox')
         # plt.show()
         pass
-        # 数据进行转换和丢到gpu
