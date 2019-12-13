@@ -46,7 +46,6 @@ class Trainer(BaseTrainer):
         for i, batch in enumerate(self.train_loader):
             if i >= self.train_loader_len:
                 break
-            break
             self.global_step += 1
             lr = self.optimizer.param_groups[0]['lr']
 
