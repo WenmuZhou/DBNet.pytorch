@@ -26,7 +26,7 @@ cd DBNet.pytorch/
 
 # build deformable convolution opertor
 cd models/modules/dcn
-python setup.py build_ext --inplace
+python3 setup.py build_ext --inplace
 ```
 
 ## Requirements

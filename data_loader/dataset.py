@@ -97,18 +97,16 @@ if __name__ == '__main__':
     import anyconfig
     from torch.utils.data import DataLoader
     from torchvision import transforms
-    # from mxnet.gluon.data import DataLoader
-    # from mxnet.gluon.data.vision import transforms
 
-    from utils import parse_config, show_img, plt
+    from utils import parse_config, show_img, plt,draw_bbox
 
-    config = anyconfig.load('config/icdar2015_resnet18_FPN_DBhead_polyLR.yaml')
+    config = anyconfig.load('config/SynthText_resnet18_FPN_DBhead_polyLR.yaml')
     config = parse_config(config)
     dataset_args = config['dataset']['train']['dataset']['args']
     # dataset_args.pop('data_path')
     # data_list = [(r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')]
-    train_data = ICDAR2015Dataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(), **dataset_args)
-    train_loader = DataLoader(dataset=train_data, batch_size=16, shuffle=True, num_workers=0)
+    train_data = SynthTextDataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(), **dataset_args)
+    train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True, num_workers=0)
     for i, data in enumerate(tqdm(train_loader)):
         # img = data['img']
         # shrink_label = data['shrink_map']
@@ -118,16 +116,8 @@ if __name__ == '__main__':
         # show_img(img[0].numpy().transpose(1, 2, 0), title='img')
         # show_img((shrink_label[0].to(torch.float)).numpy(), title='shrink_label')
         # show_img((threshold_label[0].to(torch.float)).numpy(), title='threshold_label')
-        # show_img(((threshold_label + shrink_label)[0].to(torch.float)).numpy(), title='threshold_label+threshold_label')
+        # img = draw_bbox(img[0].numpy().transpose(1, 2, 0),np.array(data['text_polys']))
+        # show_img(img, title='draw_bbox')
         # plt.show()
-        # pass
+        pass
         # 数据进行转换和丢到gpu
-        for key, value in data.items():
-            if value is not None:
-                if isinstance(value, torch.Tensor):
-                    data[key] = value.to(torch.device('cuda'))
-        assert (data['img'] != data['img']).sum() == 0
-        assert (data['shrink_map'] != data['shrink_map']).sum() == 0
-        assert (data['shrink_mask'] != data['shrink_mask']).sum() == 0
-        assert (data['threshold_map'] != data['threshold_map']).sum() == 0
-        assert (data['threshold_mask'] != data['threshold_mask']).sum() == 0
