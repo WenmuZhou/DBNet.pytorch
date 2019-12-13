@@ -82,11 +82,11 @@ class Trainer(BaseTrainer):
             acc = score_shrink_map['Mean Acc']
             iou_shrink_map = score_shrink_map['Mean IoU']
 
-            if self.global_step % self.los_iter == 0:
+            if self.global_step % self.log_iter == 0:
                 batch_time = time.time() - batch_start
                 self.logger_info(
-                    '[{}/{}], [{}/{}], global_step: {}, Speed: {:.1f} samples/sec, acc: {:.4f}, iou_shrink_map: {:.4f}, {}, lr:{:.6}, time:{:.2f}'.format(
-                        epoch, self.epochs, i + 1, self.train_loader_len, self.global_step, self.los_iter * cur_batch_size / batch_time, acc,
+                    '[{}/{}], [{}/{}], global_step: {}, speed: {:.1f} samples/sec, acc: {:.4f}, iou_shrink_map: {:.4f}, {}, lr:{:.6}, time:{:.2f}'.format(
+                        epoch, self.epochs, i + 1, self.train_loader_len, self.global_step, self.log_iter * cur_batch_size / batch_time, acc,
                         iou_shrink_map, loss_str, lr, batch_time))
                 batch_start = time.time()
 

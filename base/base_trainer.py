@@ -34,7 +34,7 @@ class BaseTrainer:
         # logger and tensorboard
         self.tensorboard_enable = self.config['trainer']['tensorboard']
         self.epochs = self.config['trainer']['epochs']
-        self.los_iter = self.config['trainer']['los_iter']
+        self.log_iter = self.config['trainer']['log_iter']
 
         anyconfig.dump(config, os.path.join(self.save_dir, 'config.yaml'))
         self.logger = setup_logger(os.path.join(self.save_dir, 'train.log'))

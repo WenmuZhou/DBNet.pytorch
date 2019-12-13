@@ -41,7 +41,7 @@ lr_scheduler:
 trainer:
   seed: 2
   epochs: 1200
-  los_iter: 10
+  log_iter: 10
   show_images_iter: 50
   resume_checkpoint: ''
   finetune_checkpoint: ''
