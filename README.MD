@@ -24,14 +24,14 @@ conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
 git clone https://github.com/WenmuZhou/DBNet.pytorch.git
 cd DBNet.pytorch/
 
-# build deformable convolution opertor
-cd models/modules/dcn
-python3 setup.py build_ext --inplace
+# build deformable_conv from torchvision >=0.5
+git clone https://github.com/pytorch/vision.git
+python3 setup.py install
 ```
 
 ## Requirements
-* pytorch 1.1+
-* torchvision 0.3+
+* pytorch 1.2+
+* torchvision 0.5+
 * gcc 4.9+
 
 ## Download

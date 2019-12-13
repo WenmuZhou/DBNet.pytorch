@@ -12,7 +12,7 @@ import anyconfig
 
 def init_args():
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
-    parser.add_argument('--config_file', default='config/icdar2015_resnet18_FPN_DBhead_polyLR.yaml', type=str)
+    parser.add_argument('--config_file', default='config/icdar2015_dcn_resnet18_FPN_DBhead_polyLR.yaml', type=str)
     parser.add_argument('--local_rank', dest='local_rank', default=0, type=int, help='Use distributed training')
 
     args = parser.parse_args()
