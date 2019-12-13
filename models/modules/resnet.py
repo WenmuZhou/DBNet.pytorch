@@ -91,7 +91,7 @@ class Bottleneck(nn.Module):
             offset_channels = 18
             self.conv2_offset = nn.Conv2d(planes, deformable_groups * offset_channels, kernel_size=3, padding=1)
             self.conv2 = DeformConv2d(planes, planes, kernel_size=3, padding=1, stride=stride, bias=False)
-            self.bn2 = BatchNorm2d(planes)
+        self.bn2 = BatchNorm2d(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = BatchNorm2d(planes * 4)
         self.relu = nn.ReLU(inplace=True)
