@@ -91,8 +91,9 @@ only train on ICDAR2015 dataset
 
 | Method                   | image size (short size) |learning rate | Precision (%) | Recall (%) | F-measure (%) | FPS |
 |:--------------------------:|:-------:|:--------:|:--------:|:------------:|:---------------:|:-----:|
-| DB-ResNet-18(paper)  | 736 |0.007 | 86.8 | 78.4 | 82.3 | 48 |
-| TBD  |736 |1e-3| TBD | TBD | TBD | TBD |
+| Defrom-ResNet-18(paper)  | 736 |0.007 | 86.8 | 78.4 | 82.3 | 48 |
+| Resnet18-FPN-DBHead  |736 |1e-3| 87.03 | 75.06 | 80.6 | 43 |
+| Resnet50-FPN-DBHead  |736 |1e-3| 88.06 | 77.14 | 82.24 | 27 |
 
 
 ### examples
