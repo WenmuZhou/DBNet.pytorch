@@ -52,10 +52,10 @@ dataset:
     dataset:
       args:
         data_path:
-          - E:\zj\dataset\icdar2015\train\train.txt
+          - /home/zj/dataset/icdar2015/train/train.txt
         img_mode: RGB
     loader:
-      batch_size: 2
+      batch_size: 1
       shuffle: true
       pin_memory: true
       num_workers: 6
@@ -64,7 +64,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - E:\zj\dataset\icdar2015\test\test.txt
+          - /home/zj/dataset/icdar2015/test/test.txt
         pre_processes:
           - type: ResizeShortSize
             args:

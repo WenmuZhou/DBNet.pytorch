@@ -10,7 +10,6 @@ import cv2
 import numpy as np
 from skimage.util import random_noise
 
-
 class RandomNoise:
     def __init__(self, random_rate):
         self.random_rate = random_rate

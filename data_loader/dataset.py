@@ -12,8 +12,8 @@ from utils import order_points_clockwise, get_datalist
 
 
 class ICDAR2015Dataset(BaseDataSet):
-    def __init__(self, data_path: str, img_mode, pre_processes, filter_keys, transform=None, **kwargs):
-        super().__init__(data_path, img_mode, pre_processes, filter_keys, transform)
+    def __init__(self, data_path: str, img_mode, pre_processes, filter_keys, ignore_tags, transform=None, **kwargs):
+        super().__init__(data_path, img_mode, pre_processes, filter_keys, ignore_tags, transform)
 
     def load_data(self, data_path: str) -> list:
         data_list = get_datalist(data_path)
@@ -41,7 +41,7 @@ class ICDAR2015Dataset(BaseDataSet):
                         boxes.append(box)
                         label = params[8]
                         texts.append(label)
-                        ignores.append(label in ['*', '###'])
+                        ignores.append(label in self.ignore_tags)
                 except:
                     print('load label failed on {}'.format(label_path))
         data = {
@@ -86,7 +86,7 @@ class SynthTextDataset(BaseDataSet):
             item['img_name'] = (self.dataRoot / imageName).stem
             item['text_polys'] = text_polys
             item['texts'] = transcripts
-            item['ignore_tags'] = [x in ['*', '###'] for x in transcripts]
+            item['ignore_tags'] = [x in self.ignore_tags for x in transcripts]
             t_data_list.append(item)
         return t_data_list
 
@@ -98,14 +98,14 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
     from torchvision import transforms
 
-    from utils import parse_config, show_img, plt,draw_bbox
+    from utils import parse_config, show_img, plt, draw_bbox
 
-    config = anyconfig.load('config/SynthText_resnet18_FPN_DBhead_polyLR.yaml')
+    config = anyconfig.load('config/icdar2015_resnet18_FPN_DBhead_polyLR.yaml')
     config = parse_config(config)
     dataset_args = config['dataset']['train']['dataset']['args']
     # dataset_args.pop('data_path')
     # data_list = [(r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')]
-    train_data = SynthTextDataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(), **dataset_args)
+    train_data = ICDAR2015Dataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(), **dataset_args)
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True, num_workers=0)
     for i, data in enumerate(tqdm(train_loader)):
         # img = data['img']

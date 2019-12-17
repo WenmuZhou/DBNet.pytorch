@@ -8,9 +8,10 @@ from data_loader.modules import *
 
 class BaseDataSet(Dataset):
 
-    def __init__(self, data_path: str, img_mode, pre_processes, filter_keys, transform=None,
+    def __init__(self, data_path: str, img_mode, pre_processes, filter_keys, ignore_tags, transform=None,
                  target_transform=None):
         assert img_mode in ['RGB', 'BRG', 'GRAY']
+        self.ignore_tags = ignore_tags
         self.data_list = self.load_data(data_path)
         item_keys = ['img_path', 'img_name', 'text_polys', 'texts', 'ignore_tags']
         for item in item_keys:
