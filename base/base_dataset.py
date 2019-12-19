@@ -20,9 +20,9 @@ class BaseDataSet(Dataset):
         self.filter_keys = filter_keys
         self.transform = transform
         self.target_transform = target_transform
-        self._init_apre_processes(pre_processes)
+        self._init_pre_processes(pre_processes)
 
-    def _init_apre_processes(self, pre_processes):
+    def _init_pre_processes(self, pre_processes):
         self.aug = []
         if pre_processes is not None:
             for aug in pre_processes:
@@ -44,7 +44,7 @@ class BaseDataSet(Dataset):
         """
         raise NotImplementedError
 
-    def allpy_pre_processes(self, data):
+    def apply_pre_processes(self, data):
         for aug in self.aug:
             data = aug(data)
         return data
@@ -57,7 +57,7 @@ class BaseDataSet(Dataset):
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
             data['img'] = im
             data['shape'] = [im.shape[0], im.shape[1]]
-            data = self.allpy_pre_processes(data)
+            data = self.apply_pre_processes(data)
 
             if self.transform:
                 data['img'] = self.transform(data['img'])
