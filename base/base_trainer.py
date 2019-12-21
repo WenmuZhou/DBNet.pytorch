@@ -27,7 +27,7 @@ class BaseTrainer:
             os.makedirs(self.checkpoint_dir)
 
         self.global_step = 0
-        self.start_epoch = 1
+        self.start_epoch = 0
         self.config = config
         self.model = model
         self.criterion = criterion
@@ -97,7 +97,7 @@ class BaseTrainer:
         """
         Full training logic
         """
-        for epoch in range(self.start_epoch, self.epochs + 1):
+        for epoch in range(self.start_epoch + 1, self.epochs + 1):
             if self.config['distributed']:
                 self.train_loader.sampler.set_epoch(epoch)
             self.epoch_result = self._train_epoch(epoch)
@@ -166,7 +166,7 @@ class BaseTrainer:
         self.model.load_state_dict(checkpoint['state_dict'], strict=resume)
         if resume:
             self.global_step = checkpoint['global_step']
-            self.start_epoch = checkpoint['epoch'] + 1
+            self.start_epoch = checkpoint['epoch']
             self.config['lr_scheduler']['args']['last_epoch'] = self.start_epoch
             # self.scheduler.load_state_dict(checkpoint['scheduler'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])
