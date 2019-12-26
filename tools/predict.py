@@ -3,6 +3,7 @@
 # @Author  : zhoujun
 
 import os
+import sys
 project = 'DBNet.pytorch'  # 工作项目根目录
 sys.path.append(os.getcwd().split(project)[0] + project)
 import time
