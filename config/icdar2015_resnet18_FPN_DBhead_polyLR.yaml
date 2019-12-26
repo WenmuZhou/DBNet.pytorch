@@ -20,6 +20,7 @@ post_processing:
     thresh: 0.3
     box_thresh: 0.7
     max_candidates: 1000
+    unclip_ratio: 1.5 # from paper
 metric:
   type: QuadMetric
 loss:

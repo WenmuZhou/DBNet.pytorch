@@ -5,11 +5,12 @@ from shapely.geometry import Polygon
 
 
 class SegDetectorRepresenter():
-    def __init__(self, thresh=0.3, box_thresh=0.7, max_candidates=1000):
+    def __init__(self, thresh=0.3, box_thresh=0.7, max_candidates=1000, unclip_ratio=1.5):
         self.min_size = 3
         self.thresh = thresh
         self.box_thresh = box_thresh
         self.max_candidates = max_candidates
+        self.unclip_ratio = unclip_ratio
 
     def __call__(self, batch, pred, is_output_polygon=False):
         '''
@@ -71,7 +72,7 @@ class SegDetectorRepresenter():
                 continue
 
             if points.shape[0] > 2:
-                box = self.unclip(points, unclip_ratio=2.0)
+                box = self.unclip(points, unclip_ratio=self.unclip_ratio)
                 if len(box) > 1:
                     continue
             else:
@@ -116,7 +117,7 @@ class SegDetectorRepresenter():
             if self.box_thresh > score:
                 continue
 
-            box = self.unclip(points).reshape(-1, 1, 2)
+            box = self.unclip(points, self.unclip_ratio).reshape(-1, 1, 2)
             box, sside = self.get_mini_boxes(box)
             if sside < self.min_size + 2:
                 continue
