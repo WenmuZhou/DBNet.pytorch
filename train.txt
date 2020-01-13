@@ -1,0 +1,2 @@
+./datasets/train/img/001.jpg	./datasets/train/gt/001.txt
+./datasets/train/img/002.jpg	./datasets/train/gt/002.txt
