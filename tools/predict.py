@@ -91,10 +91,10 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
 
-    model_path = '../output/DBNet_resnet18_FPN_DBHead/checkpoint/DBNet_latest.pth'
+    model_path = './output/DBNet_resnet18_FPN_DBHead/checkpoint/model_best.pth'
 
     img_id = 10
-    img_path = 'E:/zj/dataset/icdar2015/test/img/img_{}.jpg'.format(img_id)
+    img_path = './input/img_{}.jpg'.format(img_id)
 
     # 初始化网络
     model = Pytorch_model(model_path, gpu_id=0)
