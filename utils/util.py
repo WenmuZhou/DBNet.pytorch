@@ -127,6 +127,24 @@ def parse_config(config: dict) -> dict:
     anyconfig.merge(base_config, config)
     return base_config
 
+def save_result(img_path, box_list, score_list, is_output_polygon):
+    import pathlib
+    img_path = pathlib.Path(img_path)
+    result_path = img_path.parent / pathlib.Path(img_path.stem + '.txt')
+    if is_output_polygon:
+        with open(result_path, 'wt') as res:
+            for i, box in enumerate(box_list):
+                box = box.reshape(-1).tolist()
+                result = ",".join([str(int(x)) for x in box])
+                score = score_list[i]
+                res.write(result + ',' + str(score) + "\n")
+    else:
+        with open(result_path, 'wt') as res:
+            for i, box in enumerate(box_list):
+                score = score_list[i]
+                box = box.reshape(-1).tolist()
+                result = ",".join([str(int(x)) for x in box])
+                res.write(result + ',' + str(score) + "\n")
 
 if __name__ == '__main__':
     img = np.zeros((1, 3, 640, 640))
