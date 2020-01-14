@@ -4,16 +4,29 @@
 
 import os
 import sys
+
 project = 'DBNet.pytorch'  # 工作项目根目录
 sys.path.append(os.getcwd().split(project)[0] + project)
 import time
-
+import math
 import cv2
 import torch
 
 from data_loader import get_transforms
 from models import get_model
 from post_processing import get_post_processing
+
+
+def resize_image(img, short_size):
+    height, width, _ = img.shape
+    if height < width:
+        new_height = short_size
+        new_width = int(math.ceil(new_height / height * width / 32) * 32)
+    else:
+        new_width = short_size
+        new_height = int(math.ceil(new_width / width * height / 32) * 32)
+    resized_img = cv2.resize(img, (new_width, new_height))
+    return resized_img
 
 
 class Pytorch_model:
@@ -47,7 +60,7 @@ class Pytorch_model:
                 self.transform.append(t)
         self.transform = get_transforms(self.transform)
 
-    def predict(self, img_path: str, short_size: int = 736):
+    def predict(self, img_path: str, is_output_polygon=False, short_size: int = 736):
         '''
         对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
         :param img_path: 图像地址
@@ -59,8 +72,7 @@ class Pytorch_model:
         if self.img_mode == 'RGB':
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
-        scale = short_size / min(h, w)
-        img = cv2.resize(img, None, fx=scale, fy=scale)
+        img = resize_image(img, short_size)
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = self.transform(img)
         tensor = tensor.unsqueeze_(0)
@@ -74,15 +86,20 @@ class Pytorch_model:
             preds = self.model(tensor)
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
-            box_list, score_list = self.post_process(batch, preds)
+            box_list, score_list = self.post_process(batch, preds, is_output_polygon=is_output_polygon)
             box_list, score_list = box_list[0], score_list[0]
             if len(box_list) > 0:
-                idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0
-                box_list, score_list = box_list[idx], score_list[idx]
+                if is_output_polygon:
+                    idx = [x.sum() > 0 for x in box_list]
+                    box_list = [box_list[i] for i, v in enumerate(idx) if v]
+                    score_list = [score_list[i] for i, v in enumerate(idx) if v]
+                else:
+                    idx = box_list.reshape(box_list.shape[0], -1).sum(axis=1) > 0  # 去掉全为0的框
+                    box_list, score_list = box_list[idx], score_list[idx]
             else:
                 box_list, score_list = [], []
             t = time.time() - start
-        return preds[0, 0, :, :].detach().cpu().numpy(), box_list, t
+        return preds[0, 0, :, :].detach().cpu().numpy(), box_list, score_list, t
 
 
 if __name__ == '__main__':
@@ -98,7 +115,7 @@ if __name__ == '__main__':
 
     # 初始化网络
     model = Pytorch_model(model_path, gpu_id=0)
-    preds, boxes_list, t = model.predict(img_path)
+    preds, boxes_list, _, t = model.predict(img_path, is_output_polygon=False)
     show_img(preds)
     img = draw_bbox(cv2.imread(img_path)[:, :, ::-1], boxes_list)
     show_img(img)

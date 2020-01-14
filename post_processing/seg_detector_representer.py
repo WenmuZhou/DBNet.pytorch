@@ -67,7 +67,7 @@ class SegDetectorRepresenter():
             # _, sside = self.get_mini_boxes(contour)
             # if sside < self.min_size:
             #     continue
-            score = self.box_score_fast(pred, contour)
+            score = self.box_score_fast(pred, points.reshape((-1, 2)))
             if self.box_thresh > score:
                 continue
 

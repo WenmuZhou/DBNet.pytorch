@@ -58,10 +58,7 @@ def draw_bbox(img_path, result, color=(255, 0, 0), thickness=2):
     img_path = img_path.copy()
     for point in result:
         point = point.astype(int)
-        cv2.line(img_path, tuple(point[0]), tuple(point[1]), color, thickness)
-        cv2.line(img_path, tuple(point[1]), tuple(point[2]), color, thickness)
-        cv2.line(img_path, tuple(point[2]), tuple(point[3]), color, thickness)
-        cv2.line(img_path, tuple(point[3]), tuple(point[0]), color, thickness)
+        cv2.polylines(img_path, [point], True, color, thickness)
     return img_path
 
 
@@ -132,6 +129,6 @@ def parse_config(config: dict) -> dict:
 
 
 if __name__ == '__main__':
-    img = np.zeros((1,3,640,640))
+    img = np.zeros((1, 3, 640, 640))
     show_img(img[0][0])
     plt.show()
