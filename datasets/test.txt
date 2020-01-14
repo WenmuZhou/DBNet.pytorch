@@ -1,0 +1,2 @@
+./datasets/test/img/001.jpg	./datasets/test/gt/001.txt
+./datasets/test/img/002.jpg	./datasets/test/gt/002.txt

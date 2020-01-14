@@ -7,10 +7,19 @@
 
 ![network](imgs/paper/db.jpg)
 
-## Install
+
+## Install Using Conda
+```
+conda env create -f environment.yml
+git clone https://github.com/WenmuZhou/DBNet.pytorch.git
+cd DBNet.pytorch/
+```
+
+or
+## Install Manually 
 ```bash
-conda create --name DBNet.pytorch -y
-conda activate DBNet.pytorch
+conda create -n dbnet python=3.6
+conda activate dbnet
 
 conda install ipython pip
 
@@ -18,20 +27,19 @@ conda install ipython pip
 pip install -r requirement.txt
 
 # install PyTorch with cuda-10.1
-conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
+# Note that you can change the cudatoolkit version to the version you want.
+# Also note that torchvision >=0.5 requires Pytorch >=1.4 which is not yet released
+# so you need to install nightly version.
+conda install pytorch torchvision cudatoolkit=10.1 -c pytorch-nightly
 
 # clone repo
 git clone https://github.com/WenmuZhou/DBNet.pytorch.git
 cd DBNet.pytorch/
 
-# build deformable_conv from torchvision >=0.5
-git clone https://github.com/pytorch/vision.git
-cd vision
-python3 setup.py install
 ```
 
 ## Requirements
-* pytorch 1.3.1
+* pytorch 1.4 so you better install pytorch-nightly
 * torchvision 0.5+
 * gcc 4.9+
 
@@ -41,17 +49,23 @@ TBD
 
 ## Data Preparation
 
-train: prepare a text in the following format, use '\t' as a separator
-```bash
-/path/to/img.jpg path/to/label.txt
-...
+Training data: prepare a text `train.txt` in the following format, use '\t' as a separator
 ```
-val:
-use a folder
-```bash
-img/ store img
-gt/ store gt file
+./datasets/train/img/001.jpg	./datasets/train/gt/001.txt
 ```
+
+Validation data: prepare a text `test.txt` in the following format, use '\t' as a separator
+```
+./datasets/test/img/001.jpg	./datasets/test/gt/001.txt
+```
+- Store images in the `img` folder
+- Store groundtruth in the `gt` folder
+
+The groundtruth can be `.txt` files, with the following format:
+```
+x1, y1, x2, y2, x3, y3, x4, y4, annotation
+```
+
 
 ## Train
 1. config the `dataset['train']['dataset'['data_path']'`,`dataset['validate']['dataset'['data_path']`in [config/icdar2015_resnet18_fpn_DBhead_polyLR.yaml](cconfig/icdar2015_resnet18_fpn_DBhead_polyLR.yaml)
@@ -78,9 +92,10 @@ bash eval.sh
 
 1. config `model_path`, `img_path`, in [predict.py](tools/predict.py)
 2. use following script to predict
-```sh
-python3 predict.py
 ```
+bash predict.sh
+```
+You can change the `model_path` in the `/tools/predict.py` file to your model location. 
 
 The project is still under development.
 
