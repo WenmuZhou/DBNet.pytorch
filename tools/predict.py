@@ -117,8 +117,9 @@ def init_args():
 
 if __name__ == '__main__':
     import pathlib
+    from tqdm import tqdm
     import matplotlib.pyplot as plt
-    from utils.util import show_img, draw_bbox, save_result
+    from utils.util import show_img, draw_bbox, save_result, get_file_list
 
     args = init_args()
     print(args)
@@ -126,16 +127,17 @@ if __name__ == '__main__':
     # 初始化网络
     model = Pytorch_model(args.model_path, gpu_id=0)
     img_folder = pathlib.Path(args.input_folder)
-    for img_path in img_folder.rglob('*.jpg'):
-        preds, boxes_list, score_list, t = model.predict(str(img_path), is_output_polygon=args.polygon)
-        img = draw_bbox(cv2.imread(str(img_path))[:, :, ::-1], boxes_list)
+    for img_path in tqdm(get_file_list(args.input_folder, p_postfix=['.jpg'])):
+        preds, boxes_list, score_list, t = model.predict(img_path, is_output_polygon=args.polygon)
+        img = draw_bbox(cv2.imread(img_path)[:, :, ::-1], boxes_list)
         if args.show:
             show_img(preds)
-            show_img(img, title=img_path.name)
+            show_img(img, title=os.path.basename(img_path))
             plt.show()
         if args.save_resut:
             # 保存结果到路径
-            os.makedirs(args.output_folder,exist_ok=True)
+            os.makedirs(args.output_folder, exist_ok=True)
+            img_path = pathlib.Path(img_path)
             output_path = os.path.join(args.output_folder, img_path.stem + '_result.jpg')
             cv2.imwrite(output_path, img[:, :, ::-1])
-            save_result(output_path.replace('_result.jpg','txt'), boxes_list, score_list, args.polygon)
+            save_result(output_path.replace('_result.jpg', '.txt'), boxes_list, score_list, args.polygon)
