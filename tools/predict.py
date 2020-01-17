@@ -131,7 +131,8 @@ if __name__ == '__main__':
             show_img(preds)
             img = draw_bbox(cv2.imread(str(img_path))[:, :, ::-1], boxes_list)
             show_img(img,title=img_path.name)
+            cv2.imwrite(str(img_path.parent / pathlib.Path(img_path.stem + '_result.jpg')),img[:, :, ::-1])
             plt.show()
         if args.save_resut:
             # 保存结果到路径
-            save_result(str(img_path), boxes_list, score_list, args.polygon)
+            save_result(img_path, boxes_list, score_list, args.polygon)

@@ -128,8 +128,6 @@ def parse_config(config: dict) -> dict:
     return base_config
 
 def save_result(img_path, box_list, score_list, is_output_polygon):
-    import pathlib
-    img_path = pathlib.Path(img_path)
     result_path = img_path.parent / pathlib.Path(img_path.stem + '.txt')
     if is_output_polygon:
         with open(result_path, 'wt') as res:
