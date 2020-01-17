@@ -105,8 +105,8 @@ class Pytorch_model:
 def init_args():
     import argparse
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
-    parser.add_argument('--model_path', default='./output/DBNet_resnet18_FPN_DBHead/checkpoint/model_best.pth', type=str)
-    parser.add_argument('--img_path', default='./input/img_1.jpg', type=str, help='img path for predict')
+    parser.add_argument('--model_path', default='model_best.pth', type=str)
+    parser.add_argument('--img_folder', default='./input', type=str, help='img path for predict')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
     parser.add_argument('--save_resut',action='store_true', help='save box and score to txt file')
@@ -115,6 +115,7 @@ def init_args():
 
 
 if __name__ == '__main__':
+    import pathlib
     import matplotlib.pyplot as plt
     from utils.util import show_img, draw_bbox, save_result
 
@@ -123,12 +124,14 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     # 初始化网络
     model = Pytorch_model(args.model_path, gpu_id=0)
-    preds, boxes_list, score_list, t = model.predict(args.img_path, is_output_polygon=args.polygon)
-    if args.show:
-        show_img(preds)
-        img = draw_bbox(cv2.imread(args.img_path)[:, :, ::-1], boxes_list)
-        show_img(img)
-        plt.show()
-    if args.save_resut:
-        # 保存结果到路径
-        save_result(args.img_path, boxes_list, score_list, args.polygon)
+    img_folder = pathlib.Path(args.img_folder)
+    for img_path in img_folder.rglob('*.jpg'):
+        preds, boxes_list, score_list, t = model.predict(str(img_path), is_output_polygon=args.polygon)
+        if args.show:
+            show_img(preds)
+            img = draw_bbox(cv2.imread(str(img_path))[:, :, ::-1], boxes_list)
+            show_img(img,title=img_path.name)
+            plt.show()
+        if args.save_resut:
+            # 保存结果到路径
+            save_result(str(img_path), boxes_list, score_list, args.polygon)

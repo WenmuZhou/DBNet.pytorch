@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=0 python tools/predict.py --model_path '' --img_path '' --polygon --show --save_resut
+CUDA_VISIBLE_DEVICES=0 python tools/predict.py --model_path model_best.pth --img_folder ./input --polygon --show --save_resut
