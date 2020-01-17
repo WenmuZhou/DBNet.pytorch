@@ -106,10 +106,11 @@ def init_args():
     import argparse
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
     parser.add_argument('--model_path', default='model_best.pth', type=str)
-    parser.add_argument('--img_folder', default='./input', type=str, help='img path for predict')
+    parser.add_argument('--input_folder', default='./input', type=str, help='img path for predict')
+    parser.add_argument('--output_folder', default='./input', type=str, help='img path for predict')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
-    parser.add_argument('--save_resut',action='store_true', help='save box and score to txt file')
+    parser.add_argument('--save_resut', action='store_true', help='save box and score to txt file')
     args = parser.parse_args()
     return args
 
@@ -124,15 +125,17 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     # 初始化网络
     model = Pytorch_model(args.model_path, gpu_id=0)
-    img_folder = pathlib.Path(args.img_folder)
+    img_folder = pathlib.Path(args.input_folder)
     for img_path in img_folder.rglob('*.jpg'):
         preds, boxes_list, score_list, t = model.predict(str(img_path), is_output_polygon=args.polygon)
+        img = draw_bbox(cv2.imread(str(img_path))[:, :, ::-1], boxes_list)
+        show_img(img, title=img_path.name)
         if args.show:
             show_img(preds)
-            img = draw_bbox(cv2.imread(str(img_path))[:, :, ::-1], boxes_list)
-            show_img(img,title=img_path.name)
-            cv2.imwrite(str(img_path.parent / pathlib.Path(img_path.stem + '_result.jpg')),img[:, :, ::-1])
             plt.show()
         if args.save_resut:
             # 保存结果到路径
-            save_result(img_path, boxes_list, score_list, args.polygon)
+            os.makedirs(args.output_folder,exist_ok=True)
+            output_path = os.path.join(args.output_folder, img_path.stem + '_result.jpg')
+            cv2.imwrite(output_path, img[:, :, ::-1])
+            save_result(output_path.replace('_result.jpg','txt'), boxes_list, score_list, args.polygon)

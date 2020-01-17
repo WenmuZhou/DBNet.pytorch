@@ -127,8 +127,7 @@ def parse_config(config: dict) -> dict:
     anyconfig.merge(base_config, config)
     return base_config
 
-def save_result(img_path, box_list, score_list, is_output_polygon):
-    result_path = img_path.parent / pathlib.Path(img_path.stem + '.txt')
+def save_result(result_path, box_list, score_list, is_output_polygon):
     if is_output_polygon:
         with open(result_path, 'wt') as res:
             for i, box in enumerate(box_list):
