@@ -1,9 +1,11 @@
 name: dbnet
 channels:
-  - pytorch-nightly
+  - pytorch
   - conda-forge
   - defaults
 dependencies:
+  - pytorch==1.4
+  - torchvision==0.5
   - anyconfig==0.9.10
   - future==0.18.2
   - imgaug==0.3.0

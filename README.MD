@@ -28,9 +28,7 @@ pip install -r requirement.txt
 
 # install PyTorch with cuda-10.1
 # Note that you can change the cudatoolkit version to the version you want.
-# Also note that torchvision >=0.5 requires Pytorch >=1.4 which is not yet released
-# so you need to install nightly version.
-conda install pytorch torchvision cudatoolkit=10.1 -c pytorch-nightly
+conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
 
 # clone repo
 git clone https://github.com/WenmuZhou/DBNet.pytorch.git
@@ -39,7 +37,7 @@ cd DBNet.pytorch/
 ```
 
 ## Requirements
-* pytorch 1.4 so you better install pytorch-nightly
+* pytorch 1.4+
 * torchvision 0.5+
 * gcc 4.9+
 
@@ -88,7 +86,7 @@ bash eval.sh
 ```
 
 ## Predict 
-[predict.py](tools/predict.py) is used to inference on single image
+[predict.py](tools/predict.py) Can be used to inference on all images in a folder
 1. config `model_path`,`input_folder`,`output_folder` in [predict.sh](predict.sh)
 2. use following script to predict
 ```
