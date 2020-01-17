@@ -129,9 +129,9 @@ if __name__ == '__main__':
     for img_path in img_folder.rglob('*.jpg'):
         preds, boxes_list, score_list, t = model.predict(str(img_path), is_output_polygon=args.polygon)
         img = draw_bbox(cv2.imread(str(img_path))[:, :, ::-1], boxes_list)
-        show_img(img, title=img_path.name)
         if args.show:
             show_img(preds)
+            show_img(img, title=img_path.name)
             plt.show()
         if args.save_resut:
             # 保存结果到路径
