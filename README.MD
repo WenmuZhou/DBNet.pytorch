@@ -89,7 +89,7 @@ bash eval.sh
 
 ## Predict 
 [predict.py](tools/predict.py) is used to inference on single image
-1. config `model_path`,`img_path` in [eval.sh](eval.sh)
+1. config `model_path`,`input_folder`,`output_folder` in [predict.sh](predict.sh)
 2. use following script to predict
 ```
 bash predict.sh
