@@ -20,6 +20,8 @@ dataset:
           - type: MakeBorderMap
             args:
               shrink_ratio: 0.4
+              thresh_min: 0.3
+              thresh_max: 0.7
           - type: MakeShrinkMap
             args:
               shrink_ratio: 0.4

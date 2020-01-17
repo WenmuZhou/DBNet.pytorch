@@ -67,11 +67,11 @@ x1, y1, x2, y2, x3, y3, x4, y4, annotation
 
 ## Train
 1. config the `dataset['train']['dataset'['data_path']'`,`dataset['validate']['dataset'['data_path']`in [config/icdar2015_resnet18_fpn_DBhead_polyLR.yaml](cconfig/icdar2015_resnet18_fpn_DBhead_polyLR.yaml)
-2. single gpu train
+* . single gpu train
 ```bash
 bash singlel_gpu_train.sh
 ```
-3. Multi-gpu training
+* . Multi-gpu training
 ```bash
 bash multi_gpu_train.sh
 ```
@@ -87,8 +87,7 @@ bash eval.sh
 
 ## Predict 
 [predict.py](tools/predict.py) Can be used to inference on all images in a folder
-
-1. config `model_path`, `img_path`, in [predict.py](tools/predict.py)
+1. config `model_path`,`input_folder`,`output_folder` in [predict.sh](predict.sh)
 2. use following script to predict
 ```
 bash predict.sh
