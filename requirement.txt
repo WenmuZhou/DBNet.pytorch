@@ -11,3 +11,5 @@ scikit-image==0.16.2
 Shapely==1.6.4.post2
 tensorboard==2.1.0
 tqdm==4.40.1
+torch==1.4
+torchvision==0.5
