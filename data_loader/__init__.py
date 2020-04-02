@@ -9,6 +9,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+
 def get_dataset(data_path, module_name, transform, dataset_args):
     """
     获取训练dataset
@@ -69,6 +70,10 @@ def get_dataloader(module_config, distributed=False):
     # 创建数据集
     dataset_name = config['dataset']['type']
     data_path = dataset_args.pop('data_path')
+    if data_path == None:
+        return None
+
+    data_path = [x for x in data_path if x is not None]
     if len(data_path) == 0:
         return None
     if 'collate_fn' not in config['loader'] or config['loader']['collate_fn'] is None or len(config['loader']['collate_fn']) == 0:
