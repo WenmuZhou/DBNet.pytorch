@@ -21,10 +21,12 @@ def resize_image(img, short_size):
     height, width, _ = img.shape
     if height < width:
         new_height = short_size
-        new_width = int(math.ceil(new_height / height * width / 32) * 32)
+        new_width = new_height / height * width
     else:
         new_width = short_size
-        new_height = int(math.ceil(new_width / width * height / 32) * 32)
+        new_height = new_width / width * height
+    new_height = int(round(new_height / 32) * 32)
+    new_width = int(round(new_width / 32) * 32)
     resized_img = cv2.resize(img, (new_width, new_height))
     return resized_img
 
@@ -107,7 +109,7 @@ def init_args():
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
     parser.add_argument('--model_path', default='model_best.pth', type=str)
     parser.add_argument('--input_folder', default='./input', type=str, help='img path for predict')
-    parser.add_argument('--output_folder', default='./input', type=str, help='img path for predict')
+    parser.add_argument('--output_folder', default='./input', type=str, help='img path for output')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
     parser.add_argument('--save_resut', action='store_true', help='save box and score to txt file')

@@ -69,7 +69,8 @@ def get_dataloader(module_config, distributed=False):
     # 创建数据集
     dataset_name = config['dataset']['type']
     data_path = dataset_args.pop('data_path')
-
+    if len(data_path) == 0:
+        return None
     if 'collate_fn' not in config['loader'] or config['loader']['collate_fn'] is None or len(config['loader']['collate_fn']) == 0:
         config['loader']['collate_fn'] = None
     else:

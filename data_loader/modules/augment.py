@@ -194,7 +194,7 @@ class ResizeShortSize:
 
     def __call__(self, data: dict) -> dict:
         """
-        从scales中随机选择一个尺度，对图片和文本框进行缩放
+        对图片和文本框进行缩放
         :param data: {'img':,'text_polys':,'texts':,'ignore_tags':}
         :return:
         """
@@ -204,7 +204,7 @@ class ResizeShortSize:
         h, w, _ = im.shape
         short_edge = min(h, w)
         if short_edge < self.short_size:
-            # 保证短边 >= inputsize
+            # 保证短边 >= short_size
             scale = self.short_size / short_edge
             im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
             if self.resize_text_polys:
