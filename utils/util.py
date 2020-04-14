@@ -11,7 +11,6 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def get_file_list(folder_path: str, p_postfix: list = None, sub_dir: bool = True) -> list:
     """
     获取所给文件目录里的指定后缀的文件,读取文件列表目前使用的是 os.walk 和 os.listdir ，这两个目前比 pathlib 快很多
@@ -56,10 +55,48 @@ def exe_time(func):
 
     return newFunc
 
+def load(file_path: str):
+    file_path = pathlib.Path(file_path)
+    func_dict = {'.txt': _load_txt, '.json': _load_json, '.list': _load_txt}
+    assert file_path.suffix in func_dict
+    return func_dict[file_path.suffix](file_path)
 
-def save_json(data, json_path):
-    with open(json_path, mode='w', encoding='utf8') as f:
-        json.dump(data, f, indent=4)
+
+def _load_txt(file_path: str):
+    with open(file_path, 'r', encoding='utf8') as f:
+        content = [x.strip().strip('\ufeff').strip('\xef\xbb\xbf') for x in f.readlines()]
+    return content
+
+
+def _load_json(file_path: str):
+    with open(file_path, 'r', encoding='utf8') as f:
+        content = json.load(f)
+    return content
+
+
+def save(data, file_path):
+    file_path = pathlib.Path(file_path)
+    func_dict = {'.txt': _save_txt, '.json': _save_json}
+    assert file_path.suffix in func_dict
+    return func_dict[file_path.suffix](data, file_path)
+
+
+def _save_txt(data, file_path):
+    """
+    将一个list的数组写入txt文件里
+    :param data:
+    :param file_path:
+    :return:
+    """
+    if not isinstance(data, list):
+        data = [data]
+    with open(file_path, mode='w', encoding='utf8') as f:
+        f.write('\n'.join(data))
+
+
+def _save_json(data, file_path):
+    with open(file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=4)
 
 
 def show_img(imgs: np.ndarray, title='img'):

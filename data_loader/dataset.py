@@ -2,13 +2,13 @@
 # @Time    : 2019/8/23 21:54
 # @Author  : zhoujun
 import pathlib
-
+import os
 import cv2
 import numpy as np
 import scipy.io as sio
 
 from base import BaseDataSet
-from utils import order_points_clockwise, get_datalist
+from utils import order_points_clockwise, get_datalist, load
 
 
 class ICDAR2015Dataset(BaseDataSet):
@@ -50,6 +50,46 @@ class ICDAR2015Dataset(BaseDataSet):
             'ignore_tags': ignores,
         }
         return data
+
+
+class DetDataset(BaseDataSet):
+    def __init__(self, data_path: str, img_mode, pre_processes, filter_keys, ignore_tags, transform=None, **kwargs):
+        self.load_char_annotation = kwargs['load_char_annotation']
+        super().__init__(data_path, img_mode, pre_processes, filter_keys, ignore_tags, transform)
+
+    def load_data(self, data_path: str) -> list:
+        """
+        从json文件中读取出 文本行的坐标和gt，字符的坐标和gt
+        :param data_path:
+        :return:
+        """
+        data_list = []
+        for path in data_path:
+            content = load(path)
+            for gt in tqdm(content['data_list'], desc='read file {}'.format(path)):
+                img_path = os.path.join(content['data_root'], gt['img_name'])
+                polygons = []
+                texts = []
+                illegibility_list = []
+                language_list = []
+                for annotation in gt['annotations']:
+                    if len(annotation['polygon']) == 0 or len(annotation['text']) == 0:
+                        continue
+                    polygons.append(annotation['polygon'])
+                    texts.append(annotation['text'])
+                    illegibility_list.append(annotation['illegibility'])
+                    language_list.append(annotation['language'])
+                    if self.load_char_annotation:
+                        for char_annotation in annotation['chars']:
+                            if len(char_annotation['polygon']) == 0 or len(char_annotation['char']) == 0:
+                                continue
+                            polygons.append(char_annotation['polygon'])
+                            texts.append(char_annotation['char'])
+                            illegibility_list.append(char_annotation['illegibility'])
+                            language_list.append(char_annotation['language'])
+                data_list.append({'img_path': img_path, 'img_name': gt['img_name'], 'text_polys': np.array(polygons),
+                                  'texts': texts, 'ignore_tags': illegibility_list})
+        return data_list
 
 
 class SynthTextDataset(BaseDataSet):
@@ -105,7 +145,8 @@ if __name__ == '__main__':
     dataset_args = config['dataset']['train']['dataset']['args']
     # dataset_args.pop('data_path')
     # data_list = [(r'E:/zj/dataset/icdar2015/train/img/img_15.jpg', 'E:/zj/dataset/icdar2015/train/gt/gt_img_15.txt')]
-    train_data = ICDAR2015Dataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(), **dataset_args)
+    train_data = ICDAR2015Dataset(data_path=dataset_args.pop('data_path'), transform=transforms.ToTensor(),
+                                  **dataset_args)
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True, num_workers=0)
     for i, data in enumerate(tqdm(train_loader)):
         # img = data['img']
