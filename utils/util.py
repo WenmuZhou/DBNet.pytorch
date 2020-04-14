@@ -11,6 +11,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def get_file_list(folder_path: str, p_postfix: list = None, sub_dir: bool = True) -> list:
     """
     获取所给文件目录里的指定后缀的文件,读取文件列表目前使用的是 os.walk 和 os.listdir ，这两个目前比 pathlib 快很多
@@ -54,6 +55,7 @@ def exe_time(func):
         return back
 
     return newFunc
+
 
 def load(file_path: str):
     file_path = pathlib.Path(file_path)
@@ -200,6 +202,20 @@ def save_result(result_path, box_list, score_list, is_output_polygon):
                 box = box.reshape(-1).tolist()
                 result = ",".join([str(int(x)) for x in box])
                 res.write(result + ',' + str(score) + "\n")
+
+
+def expand_polygon(polygon):
+    """
+    对只有一个字符的框进行扩充
+    """
+    (x, y), (w, h), angle = cv2.minAreaRect(np.float32(polygon))
+    if angle < -45:
+        w, h = h, w
+        angle += 90
+    new_w = w + h
+    box = ((x, y), (new_w, h), angle)
+    points = cv2.boxPoints(box)
+    return order_points_clockwise(points)
 
 
 if __name__ == '__main__':

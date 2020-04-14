@@ -42,8 +42,8 @@ lr_scheduler:
 trainer:
   seed: 2
   epochs: 1200
-  log_iter: 10
-  show_images_iter: 50
+  log_iter: 1
+  show_images_iter: 1
   resume_checkpoint: ''
   finetune_checkpoint: ''
   output_dir: output
@@ -53,11 +53,12 @@ dataset:
     dataset:
       args:
         data_path:
-          - ./datasets/train.txt
+          - D:\dataset\icdar2015\detection\train.json
         img_mode: RGB
         load_char_annotation: false
+        expand_one_char: false
     loader:
-      batch_size: 6
+      batch_size: 2
       shuffle: true
       pin_memory: true
       num_workers: 6
@@ -66,7 +67,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - ./datasets/test.txt
+          - D:\dataset\icdar2015\detection\test.json
         pre_processes:
           - type: ResizeShortSize
             args:
@@ -74,6 +75,7 @@ dataset:
               resize_text_polys: false
         img_mode: RGB
         load_char_annotation: false
+        expand_one_char: false
     loader:
       batch_size: 1
       shuffle: true

@@ -6,9 +6,10 @@ import os
 import cv2
 import numpy as np
 import scipy.io as sio
+from tqdm.auto import tqdm
 
 from base import BaseDataSet
-from utils import order_points_clockwise, get_datalist, load
+from utils import order_points_clockwise, get_datalist, load,expand_polygon
 
 
 class ICDAR2015Dataset(BaseDataSet):
@@ -55,6 +56,7 @@ class ICDAR2015Dataset(BaseDataSet):
 class DetDataset(BaseDataSet):
     def __init__(self, data_path: str, img_mode, pre_processes, filter_keys, ignore_tags, transform=None, **kwargs):
         self.load_char_annotation = kwargs['load_char_annotation']
+        self.expand_one_char = kwargs['expand_one_char']
         super().__init__(data_path, img_mode, pre_processes, filter_keys, ignore_tags, transform)
 
     def load_data(self, data_path: str) -> list:
@@ -75,6 +77,8 @@ class DetDataset(BaseDataSet):
                 for annotation in gt['annotations']:
                     if len(annotation['polygon']) == 0 or len(annotation['text']) == 0:
                         continue
+                    if len(annotation['text']) > 1 and self.expand_one_char:
+                        annotation['polygon'] = expand_polygon(annotation['polygon'])
                     polygons.append(annotation['polygon'])
                     texts.append(annotation['text'])
                     illegibility_list.append(annotation['illegibility'])
@@ -133,7 +137,6 @@ class SynthTextDataset(BaseDataSet):
 
 if __name__ == '__main__':
     import torch
-    from tqdm.auto import tqdm
     import anyconfig
     from torch.utils.data import DataLoader
     from torchvision import transforms
