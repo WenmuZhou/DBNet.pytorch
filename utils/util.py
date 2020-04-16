@@ -108,6 +108,7 @@ def show_img(imgs: np.ndarray, title='img'):
         plt.figure()
         plt.title('{}_{}'.format(title, i))
         plt.imshow(img, cmap=None if color else 'gray')
+    plt.show()
 
 
 def draw_bbox(img_path, result, color=(255, 0, 0), thickness=2):

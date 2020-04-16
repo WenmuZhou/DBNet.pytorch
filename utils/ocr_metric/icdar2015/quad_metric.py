@@ -44,7 +44,7 @@ class QuadMetric():
         pred_polygons_batch = np.array(output[0])
         pred_scores_batch = np.array(output[1])
         for polygons, pred_polygons, pred_scores, ignore_tags in zip(gt_polyons_batch, pred_polygons_batch, pred_scores_batch, ignore_tags_batch):
-            gt = [dict(points=polygons[i], ignore=ignore_tags[i]) for i in range(len(polygons))]
+            gt = [dict(points=np.int64(polygons[i]), ignore=ignore_tags[i]) for i in range(len(polygons))]
             if is_output_polygon:
                 pred = [dict(points=pred_polygons[i]) for i in range(len(pred_polygons))]
             else:
@@ -53,7 +53,7 @@ class QuadMetric():
                 for i in range(pred_polygons.shape[0]):
                     if pred_scores[i] >= box_thresh:
                         # print(pred_polygons[i,:,:].tolist())
-                        pred.append(dict(points=pred_polygons[i, :, :].tolist()))
+                        pred.append(dict(points=pred_polygons[i, :, :].astype(np.int)))
                 # pred = [dict(points=pred_polygons[i,:,:].tolist()) if pred_scores[i] >= box_thresh for i in range(pred_polygons.shape[0])]
             results.append(self.evaluator.evaluate_image(gt, pred))
         return results
