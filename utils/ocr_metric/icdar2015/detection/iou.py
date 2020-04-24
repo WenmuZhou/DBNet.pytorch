@@ -147,23 +147,18 @@ class DetectionIoUEvaluator(object):
             iouMat = np.empty(outputShape)
             gtRectMat = np.zeros(len(gtPols), np.int8)
             detRectMat = np.zeros(len(detPols), np.int8)
-            import time
-            tic = time.time()
+            # for gtNum in range(len(gtPols)):
+            #     for detNum in range(len(detPols)):
+            #         pG = gtPols[gtNum]
+            #         pD = detPols[detNum]
+            #         iouMat[gtNum, detNum] = get_intersection_over_union(pD, pG)
+            # gtPols = np.float32(gtPols)
+            # detPols = np.float32(detPols)
             for gtNum in range(len(gtPols)):
                 for detNum in range(len(detPols)):
-                    pG = gtPols[gtNum]
-                    pD = detPols[detNum]
-                    iouMat[gtNum, detNum] = get_intersection_over_union(pD, pG)
-            print(time.time()-tic)
-            tic = time.time()
-            gtPols = np.float32(gtPols)
-            detPols = np.float32(detPols)
-            for gtNum in range(len(gtPols)):
-                for detNum in range(len(detPols)):
-                    pG = gtPols[gtNum]
-                    pD = detPols[detNum]
+                    pG = np.float32(gtPols[gtNum])
+                    pD = np.float32(detPols[detNum])
                     iouMat[gtNum, detNum] = iou_rotate(pD, pG)
-            print(time.time()-tic)
             for gtNum in range(len(gtPols)):
                 for detNum in range(len(detPols)):
                     if gtRectMat[gtNum] == 0 and detRectMat[
