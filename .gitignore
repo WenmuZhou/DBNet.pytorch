@@ -8,4 +8,4 @@
 __pycache__/
 .idea/
 output/
-test/
+test/*.jpg
