@@ -32,7 +32,7 @@ def resize_image(img, short_size):
 
 
 class Pytorch_model:
-    def __init__(self, model_path, gpu_id=None):
+    def __init__(self, model_path, post_p_thre=0.7, gpu_id=None):
         '''
         初始化pytorch模型
         :param model_path: 模型地址(可以是模型的参数或者参数和计算图一起保存的文件)
@@ -51,6 +51,7 @@ class Pytorch_model:
         config['arch']['args']['pretrained'] = False
         self.model = get_model(config['arch'])
         self.post_process = get_post_processing(config['post_processing'])
+        self.post_process.box_thresh = post_p_thre
         self.img_mode = config['dataset']['train']['dataset']['args']['img_mode']
         self.model.load_state_dict(checkpoint['state_dict'])
         self.model.to(self.device)
@@ -108,8 +109,9 @@ def init_args():
     import argparse
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
     parser.add_argument('--model_path', default='model_best.pth', type=str)
-    parser.add_argument('--input_folder', default='./input', type=str, help='img path for predict')
-    parser.add_argument('--output_folder', default='./input', type=str, help='img path for output')
+    parser.add_argument('--input_folder', default='./test/input', type=str, help='img path for predict')
+    parser.add_argument('--output_folder', default='./test/output', type=str, help='img path for output')
+    parser.add_argument('--thre', default=0.7, help='the thresh of post_processing')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
     parser.add_argument('--save_resut', action='store_true', help='save box and score to txt file')
@@ -127,7 +129,7 @@ if __name__ == '__main__':
     print(args)
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     # 初始化网络
-    model = Pytorch_model(args.model_path, gpu_id=0)
+    model = Pytorch_model(args.model_path, post_p_thre=args.thre, gpu_id=0)
     img_folder = pathlib.Path(args.input_folder)
     for img_path in tqdm(get_file_list(args.input_folder, p_postfix=['.jpg'])):
         preds, boxes_list, score_list, t = model.predict(img_path, is_output_polygon=args.polygon)
@@ -136,10 +138,11 @@ if __name__ == '__main__':
             show_img(preds)
             show_img(img, title=os.path.basename(img_path))
             plt.show()
-        if args.save_resut:
-            # 保存结果到路径
-            os.makedirs(args.output_folder, exist_ok=True)
-            img_path = pathlib.Path(img_path)
-            output_path = os.path.join(args.output_folder, img_path.stem + '_result.jpg')
-            cv2.imwrite(output_path, img[:, :, ::-1])
-            save_result(output_path.replace('_result.jpg', '.txt'), boxes_list, score_list, args.polygon)
+        # 保存结果到路径
+        os.makedirs(args.output_folder, exist_ok=True)
+        img_path = pathlib.Path(img_path)
+        output_path = os.path.join(args.output_folder, img_path.stem + '_result.jpg')
+        pred_path = os.path.join(args.output_folder, img_path.stem + '_pred.jpg')
+        cv2.imwrite(output_path, img[:, :, ::-1])
+        cv2.imwrite(pred_path, preds * 255)
+        save_result(output_path.replace('_result.jpg', '.txt'), boxes_list, score_list, args.polygon)

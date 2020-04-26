@@ -92,8 +92,10 @@ bash eval.sh
 ```
 bash predict.sh
 ```
-You can change the `model_path` in the `/tools/predict.py` file to your model location. 
+You can change the `model_path` in the `predict.sh` file to your model location. 
 
+tips: if result is not good, you can change `thre` in [predict.sh](predict.sh) 
+    
 The project is still under development.
 
 <h2 id="Performance">Performance</h2>
