@@ -23,6 +23,8 @@ post_processing:
     unclip_ratio: 1.5 # from paper
 metric:
   type: QuadMetric
+  args:
+    is_output_polygon: false
 loss:
   type: DBLoss
   args:

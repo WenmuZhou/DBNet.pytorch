@@ -29,7 +29,8 @@ def iou_rotate(box_a, box_b, method='union'):
 
 
 class DetectionIoUEvaluator(object):
-    def __init__(self, iou_constraint=0.5, area_precision_constraint=0.5):
+    def __init__(self, is_output_polygon=False, iou_constraint=0.5, area_precision_constraint=0.5):
+        self.is_output_polygon = is_output_polygon
         self.iou_constraint = iou_constraint
         self.area_precision_constraint = area_precision_constraint
 
@@ -147,18 +148,20 @@ class DetectionIoUEvaluator(object):
             iouMat = np.empty(outputShape)
             gtRectMat = np.zeros(len(gtPols), np.int8)
             detRectMat = np.zeros(len(detPols), np.int8)
-            # for gtNum in range(len(gtPols)):
-            #     for detNum in range(len(detPols)):
-            #         pG = gtPols[gtNum]
-            #         pD = detPols[detNum]
-            #         iouMat[gtNum, detNum] = get_intersection_over_union(pD, pG)
-            # gtPols = np.float32(gtPols)
-            # detPols = np.float32(detPols)
-            for gtNum in range(len(gtPols)):
-                for detNum in range(len(detPols)):
-                    pG = np.float32(gtPols[gtNum])
-                    pD = np.float32(detPols[detNum])
-                    iouMat[gtNum, detNum] = iou_rotate(pD, pG)
+            if self.is_output_polygon:
+                for gtNum in range(len(gtPols)):
+                    for detNum in range(len(detPols)):
+                        pG = gtPols[gtNum]
+                        pD = detPols[detNum]
+                        iouMat[gtNum, detNum] = get_intersection_over_union(pD, pG)
+            else:
+                # gtPols = np.float32(gtPols)
+                # detPols = np.float32(detPols)
+                for gtNum in range(len(gtPols)):
+                    for detNum in range(len(detPols)):
+                        pG = np.float32(gtPols[gtNum])
+                        pD = np.float32(detPols[detNum])
+                        iouMat[gtNum, detNum] = iou_rotate(pD, pG)
             for gtNum in range(len(gtPols)):
                 for detNum in range(len(detPols)):
                     if gtRectMat[gtNum] == 0 and detRectMat[

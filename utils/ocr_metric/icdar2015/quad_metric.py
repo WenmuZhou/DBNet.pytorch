@@ -24,8 +24,8 @@ class AverageMeter(object):
 
 
 class QuadMetric():
-    def __init__(self):
-        self.evaluator = DetectionIoUEvaluator()
+    def __init__(self, is_output_polygon=False):
+        self.evaluator = DetectionIoUEvaluator(is_output_polygon=is_output_polygon)
 
     def measure(self, batch, output, is_output_polygon=False, box_thresh=0.6):
         '''
