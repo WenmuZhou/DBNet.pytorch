@@ -1,0 +1,86 @@
+name: DBNet
+base: ['config/open_dataset.yaml']
+arch:
+  type: DBModel
+  args:
+    backbone: deformable_resnet50
+    pretrained: false
+    segmentation_body:
+      type: FPN
+      args:
+        inner_channels: 256
+    segmentation_head:
+      type: DBHead
+      args:
+        out_channels: 2
+        k: 50
+post_processing:
+  type: SegDetectorRepresenter
+  args:
+    thresh: 0.3
+    box_thresh: 0.7
+    max_candidates: 1000
+    unclip_ratio: 1.5 # from paper
+metric:
+  type: QuadMetric
+  args:
+    is_output_polygon: false
+loss:
+  type: DBLoss
+  args:
+    alpha: 1
+    beta: 10
+    ohem_ratio: 3
+optimizer:
+  type: Adam
+  args:
+    lr: 0.001
+    weight_decay: 0
+    amsgrad: true
+lr_scheduler:
+  type: WarmupPolyLR
+  args:
+    warmup_epoch: 3
+trainer:
+  seed: 2
+  epochs: 1200
+  log_iter: 1
+  show_images_iter: 1
+  resume_checkpoint: ''
+  finetune_checkpoint: ''
+  output_dir: output
+  tensorboard: true
+dataset:
+  train:
+    dataset:
+      args:
+        data_path:
+          - D:\dataset\icdar2015\detection\train.json
+        img_mode: RGB
+        load_char_annotation: false
+        expand_one_char: false
+    loader:
+      batch_size: 2
+      shuffle: true
+      pin_memory: true
+      num_workers: 6
+      collate_fn: ''
+  validate:
+    dataset:
+      args:
+        data_path:
+          - D:\dataset\icdar2015\detection\test.json
+        pre_processes:
+          - type: ResizeShortSize
+            args:
+              short_size: 736
+              resize_text_polys: false
+        img_mode: RGB
+        load_char_annotation: false
+        expand_one_char: false
+    loader:
+      batch_size: 1
+      shuffle: true
+      pin_memory: false
+      num_workers: 6
+      collate_fn: ICDARCollectFN
