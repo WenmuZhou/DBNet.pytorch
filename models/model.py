@@ -58,16 +58,19 @@ class DBModel(nn.Module):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:0')
+    device = torch.device('cpu')
     x = torch.zeros(1, 3, 640, 640).to(device)
 
     model_config = {
-        'backbone': 'shufflenetv2',
-        'fpem_repeat': 2,  # fpem模块重复的次数
-        'pretrained': True,  # backbone 是否使用imagesnet的预训练模型
+        'backbone': 'deformable_resnet50',
+        'pretrained': False,  # backbone 是否使用imagesnet的预训练模型
         'out_channels': 2,
         "k": 50,
-        'segmentation_head': 'FPN'  # 分割头，FPN or FPEM_FFM
+        'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},  # 分割头，FPN or FPEM_FFM
+        'segmentation_head': {
+            'type': 'DBHead',
+            'args': {'out_channels': 2, 'k': 50}
+        },
     }
     model = DBModel(model_config=model_config).to(device)
     import time
