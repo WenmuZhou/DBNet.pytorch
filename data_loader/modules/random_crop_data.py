@@ -49,7 +49,7 @@ class EastRandomCropData():
                 ignore_tags_crop.append(tag)
                 texts_crop.append(text)
         data['img'] = img
-        data['text_polys'] = np.array(text_polys_crop)
+        data['text_polys'] = np.float32(text_polys_crop)
         data['ignore_tags'] = ignore_tags_crop
         data['texts'] = texts_crop
         return data
