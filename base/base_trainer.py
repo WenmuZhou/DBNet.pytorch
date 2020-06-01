@@ -35,10 +35,10 @@ class BaseTrainer:
         self.tensorboard_enable = self.config['trainer']['tensorboard']
         self.epochs = self.config['trainer']['epochs']
         self.log_iter = self.config['trainer']['log_iter']
-
-        anyconfig.dump(config, os.path.join(self.save_dir, 'config.yaml'))
-        self.logger = setup_logger(os.path.join(self.save_dir, 'train.log'))
-        self.logger_info(pformat(self.config))
+        if config['local_rank'] == 0:
+            anyconfig.dump(config, os.path.join(self.save_dir, 'config.yaml'))
+            self.logger = setup_logger(os.path.join(self.save_dir, 'train.log'))
+            self.logger_info(pformat(self.config))
 
         # device
         torch.manual_seed(self.config['trainer']['seed'])  # 为CPU设置随机种子
