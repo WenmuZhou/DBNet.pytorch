@@ -25,9 +25,10 @@ class AverageMeter(object):
 
 class QuadMetric():
     def __init__(self, is_output_polygon=False):
+        self.is_output_polygon = is_output_polygon
         self.evaluator = DetectionIoUEvaluator(is_output_polygon=is_output_polygon)
 
-    def measure(self, batch, output, is_output_polygon=False, box_thresh=0.6):
+    def measure(self, batch, output, box_thresh=0.6):
         '''
         batch: (image, polygons, ignore_tags
         batch: a dict produced by dataloaders.
@@ -45,7 +46,7 @@ class QuadMetric():
         pred_scores_batch = np.array(output[1])
         for polygons, pred_polygons, pred_scores, ignore_tags in zip(gt_polyons_batch, pred_polygons_batch, pred_scores_batch, ignore_tags_batch):
             gt = [dict(points=np.int64(polygons[i]), ignore=ignore_tags[i]) for i in range(len(polygons))]
-            if is_output_polygon:
+            if self.is_output_polygon:
                 pred = [dict(points=pred_polygons[i]) for i in range(len(pred_polygons))]
             else:
                 pred = []
@@ -58,8 +59,8 @@ class QuadMetric():
             results.append(self.evaluator.evaluate_image(gt, pred))
         return results
 
-    def validate_measure(self, batch, output, is_output_polygon=False, box_thresh=0.6):
-        return self.measure(batch, output, is_output_polygon, box_thresh)
+    def validate_measure(self, batch, output, box_thresh=0.6):
+        return self.measure(batch, output, box_thresh)
 
     def evaluate_measure(self, batch, output):
         return self.measure(batch, output), np.linspace(0, batch['image'].shape[0]).tolist()

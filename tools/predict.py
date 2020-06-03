@@ -63,7 +63,7 @@ class Pytorch_model:
                 self.transform.append(t)
         self.transform = get_transforms(self.transform)
 
-    def predict(self, img_path: str, is_output_polygon=False, short_size: int = 736):
+    def predict(self, img_path: str, is_output_polygon=False, short_size: int = 1024):
         '''
         对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
         :param img_path: 图像地址
@@ -111,7 +111,7 @@ def init_args():
     parser.add_argument('--model_path', default='model_best.pth', type=str)
     parser.add_argument('--input_folder', default='./test/input', type=str, help='img path for predict')
     parser.add_argument('--output_folder', default='./test/output', type=str, help='img path for output')
-    parser.add_argument('--thre', default=0.7, help='the thresh of post_processing')
+    parser.add_argument('--thre', default=0.3, help='the thresh of post_processing')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
     parser.add_argument('--save_resut', action='store_true', help='save box and score to txt file')

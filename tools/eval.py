@@ -50,7 +50,7 @@ class EVAL():
                             batch[key] = value.to(self.device)
                 start = time.time()
                 preds = self.model(batch['img'])
-                boxes, scores = self.post_process(batch, preds)
+                boxes, scores = self.post_process(batch, preds,is_output_polygon=self.metric_cls.is_output_polygon)
                 total_frame += batch['img'].size()[0]
                 total_time += time.time() - start
                 raw_metric = self.metric_cls.validate_measure(batch, (boxes, scores))
