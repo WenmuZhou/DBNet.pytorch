@@ -166,10 +166,16 @@ class Trainer(BaseTrainer):
                     self.metrics['hmean'] = hmean
                     self.metrics['precision'] = precision
                     self.metrics['recall'] = recall
+                    self.metrics['best_model_epoch'] = self.epoch_result['epoch']
             else:
                 if self.epoch_result['train_loss'] <= self.metrics['train_loss']:
                     save_best = True
                     self.metrics['train_loss'] = self.epoch_result['train_loss']
+                    self.metrics['best_model_epoch'] = self.epoch_result['epoch']
+            best_str = 'current best, '
+            for k, v in self.metrics.items():
+                best_str += '{}: {:.6f}, '.format(k, v)
+            self.logger_info(best_str)
             self._save_checkpoint(self.epoch_result['epoch'], net_save_path, save_best)
 
     def _on_train_finish(self):
