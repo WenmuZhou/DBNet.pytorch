@@ -152,7 +152,7 @@ class BaseTrainer:
         torch.save(state, filename)
         if save_best:
             shutil.copy(filename, os.path.join(self.checkpoint_dir, 'model_best.pth'))
-            self.logger_info("Saving current best: {}".format(file_name))
+            self.logger_info("Saving current best: {}".format(os.path.join(self.checkpoint_dir, 'model_best.pth')))
         else:
             self.logger_info("Saving checkpoint: {}".format(filename))
 
