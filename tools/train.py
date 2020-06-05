@@ -21,7 +21,7 @@ def init_args():
 
 def main(config):
     import torch
-    from models import get_model, get_loss
+    from models import build_model, build_loss
     from data_loader import get_dataloader
     from trainer import Trainer
     from post_processing import get_post_processing
@@ -41,9 +41,9 @@ def main(config):
     else:
         validate_loader = None
 
-    criterion = get_loss(config['loss']).cuda()
+    criterion = build_loss(config['loss'].pop('type'), **config['loss']).cuda()
 
-    model = get_model(config['arch'])
+    model = build_model(config['arch'].pop('type'), **config['arch'])
 
     post_p = get_post_processing(config['post_processing'])
     metric = get_metric(config['metric'])

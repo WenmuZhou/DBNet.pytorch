@@ -10,7 +10,7 @@ from models.neck import build_neck
 from models.head import build_head
 
 
-class DBModel(nn.Module):
+class DetModel(nn.Module):
     def __init__(self, model_config: dict):
         """
         PANnet

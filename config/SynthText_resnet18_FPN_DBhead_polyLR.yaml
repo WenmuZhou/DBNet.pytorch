@@ -1,18 +1,17 @@
 name: DBNet
 base: ['config/SynthText.yaml']
 arch:
-  type: DBModel
-  args:
-    backbone:
-      type: resnet18
-      pretrained: true
-    neck:
-      type: FPN
-      inner_channels: 256
-    head:
-      type: DBHead
-      out_channels: 2
-      k: 50
+  type: DetModel
+  backbone:
+    type: resnet18
+    pretrained: true
+  neck:
+    type: FPN
+    inner_channels: 256
+  head:
+    type: DBHead
+    out_channels: 2
+    k: 50
 post_processing:
   type: SegDetectorRepresenter
   args:
@@ -26,10 +25,9 @@ metric:
     is_output_polygon: false
 loss:
   type: DBLoss
-  args:
-    alpha: 1
-    beta: 10
-    ohem_ratio: 3
+  alpha: 1
+  beta: 10
+  ohem_ratio: 3
 optimizer:
   type: Adam
   args:

@@ -14,6 +14,6 @@ support_backbone = ['resnet18', 'deformable_resnet18', 'deformable_resnet50',
 
 
 def build_backbone(backbone_name, **kwargs):
-    assert backbone_name in support_backbone, f'all suuport backbone is {support_backbone}'
+    assert backbone_name in support_backbone, f'all support backbone is {support_backbone}'
     backbone = eval(backbone_name)(**kwargs)
     return backbone
