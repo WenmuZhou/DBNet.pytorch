@@ -129,10 +129,11 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers, num_classes=1000, dcn=None):
+    def __init__(self, block, layers, dcn=None):
         self.dcn = dcn
         self.inplanes = 64
         super(ResNet, self).__init__()
+        self.out_channels = []
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = BatchNorm2d(64)
@@ -142,10 +143,7 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dcn=dcn)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dcn=dcn)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dcn=dcn)
-        self.avgpool = nn.AvgPool2d(7, stride=1)
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
 
-        self.smooth = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -174,7 +172,7 @@ class ResNet(nn.Module):
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, dcn=dcn))
-
+        self.out_channels.append(planes*block.expansion)
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -268,3 +266,13 @@ def resnet152(pretrained=True, **kwargs):
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet152']), strict=False)
     return model
+
+if __name__ == '__main__':
+    import torch
+    x = torch.zeros(2,3,640,640)
+    net = deformable_resnet50(pretrained=False)
+    y = net(x)
+    for u in y:
+        print(u.shape)
+
+    print(net.out_channels)

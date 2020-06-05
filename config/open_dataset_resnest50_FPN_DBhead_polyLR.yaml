@@ -4,7 +4,7 @@ arch:
   type: DBModel
   args:
     backbone:
-      type: resnet18
+      type: resnest50
       pretrained: true
     neck:
       type: FPN

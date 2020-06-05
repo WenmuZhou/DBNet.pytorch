@@ -86,7 +86,7 @@ class InvertedResidual(nn.Module):
 class ShuffleNetV2(nn.Module):
     def __init__(self, stages_repeats, stages_out_channels, num_classes=1000):
         super(ShuffleNetV2, self).__init__()
-
+        self.out_channels = []
         if len(stages_repeats) != 3:
             raise ValueError('expected stages_repeats as list of 3 positive ints')
         if len(stages_out_channels) != 5:
@@ -103,7 +103,7 @@ class ShuffleNetV2(nn.Module):
         input_channels = output_channels
 
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-
+        self.out_channels.append(input_channels)
         stage_names = ['stage{}'.format(i) for i in [2, 3, 4]]
         for name, repeats, output_channels in zip(
                 stage_names, stages_repeats, self._stage_out_channels[1:]):
@@ -112,7 +112,7 @@ class ShuffleNetV2(nn.Module):
                 seq.append(InvertedResidual(output_channels, output_channels, 1))
             setattr(self, name, nn.Sequential(*seq))
             input_channels = output_channels
-
+            self.out_channels.append(input_channels)
         output_channels = self._stage_out_channels[-1]
         self.conv5 = nn.Sequential(
             nn.Conv2d(input_channels, output_channels, 1, 1, 0, bias=False),

@@ -3,17 +3,16 @@ base: ['config/icdar2015.yaml']
 arch:
   type: DBModel
   args:
-    backbone: deformable_resnet18
-    pretrained: true
-    segmentation_body:
+    backbone:
+     type: deformable_resnet18
+     pretrained: true
+    neck:
       type: FPN
-      args:
-        inner_channels: 256
-    segmentation_head:
+      inner_channels: 256
+    head:
       type: DBHead
-      args:
-        out_channels: 2
-        k: 50
+      out_channels: 2
+      k: 50
 post_processing:
   type: SegDetectorRepresenter
   args:

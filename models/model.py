@@ -1,29 +1,13 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:57
 # @Author  : zhoujun
-
+from addict import Dict
+from torch import nn
 import torch.nn.functional as F
 
-from models.modules import *
-
-backbone_dict = {
-    'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
-    'deformable_resnet18': {'models': deformable_resnet18, 'out': [64, 128, 256, 512]},
-    'resnet34': {'models': resnet34, 'out': [64, 128, 256, 512]},
-    'resnet50': {'models': resnet50, 'out': [256, 512, 1024, 2048]},
-    'deformable_resnet50': {'models': deformable_resnet50, 'out': [256, 512, 1024, 2048]},
-    'resnet101': {'models': resnet101, 'out': [256, 512, 1024, 2048]},
-    'resnet152': {'models': resnet152, 'out': [256, 512, 1024, 2048]},
-    'shufflenetv2': {'models': shufflenet_v2_x1_0, 'out': [24, 116, 232, 464]}
-}
-
-segmentation_body_dict = {'FPN': FPN, 'FPEM_FFM': FPEM_FFM}
-segmentation_head_dict = {'conv': ConvHead, 'DBHead': DBHead}
-
-
-# 'MobileNetV3_Large': {'models': MobileNetV3_Large, 'out': [24, 40, 160, 160]},
-# 'MobileNetV3_Small': {'models': MobileNetV3_Small, 'out': [16, 24, 48, 96]},
-# 'shufflenetv2': {'models': shufflenet_v2_x1_0, 'out': [24, 116, 232, 464]}}
+from models.backbone import build_backbone
+from models.neck import build_neck
+from models.head import build_head
 
 
 class DBModel(nn.Module):
@@ -33,44 +17,34 @@ class DBModel(nn.Module):
         :param model_config: 模型配置
         """
         super().__init__()
-        backbone = model_config['backbone']
-        pretrained = model_config['pretrained']
-        segmentation_body = model_config['segmentation_body']['type']
-        segmentation_head = model_config['segmentation_head']['type']
-
-        assert backbone in backbone_dict, 'backbone must in: {}'.format(backbone_dict)
-        assert segmentation_body in segmentation_body, 'segmentation_head must in: {}'.format(segmentation_body)
-        assert segmentation_head in segmentation_head_dict, 'segmentation_head must in: {}'.format(segmentation_head_dict)
-
-        backbone_model, backbone_out = backbone_dict[backbone]['models'], backbone_dict[backbone]['out']
-        self.backbone = backbone_model(pretrained=pretrained)
-        self.segmentation_body = segmentation_body_dict[segmentation_body](backbone_out, **model_config['segmentation_body']['args'])
-        self.segmentation_head = segmentation_head_dict[segmentation_head](self.segmentation_body.out_channels, **model_config['segmentation_head']['args'])
-        self.name = '{}_{}_{}'.format(backbone, segmentation_body, segmentation_head)
+        model_config = Dict(model_config)
+        backbone_type = model_config.backbone.pop('type')
+        neck_type = model_config.neck.pop('type')
+        head_type = model_config.head.pop('type')
+        self.backbone = build_backbone(backbone_type, **model_config.backbone)
+        self.neck = build_neck(neck_type, in_channels=self.backbone.out_channels, **model_config.neck)
+        self.head = build_head(head_type, in_channels=self.neck.out_channels, **model_config.head)
+        self.name = '{}_{}_{}'.format(backbone_type, neck_type, head_type)
 
     def forward(self, x):
         _, _, H, W = x.size()
         backbone_out = self.backbone(x)
-        segmentation_body_out = self.segmentation_body(backbone_out)
-        y = self.segmentation_head(segmentation_body_out)
+        neck_out = self.neck(backbone_out)
+        y = self.head(neck_out)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y
 
 
 if __name__ == '__main__':
+    import torch
+
     device = torch.device('cpu')
-    x = torch.zeros(1, 3, 640, 640).to(device)
+    x = torch.zeros(2, 3, 640, 640).to(device)
 
     model_config = {
-        'backbone': 'deformable_resnet50',
-        'pretrained': False,  # backbone 是否使用imagesnet的预训练模型
-        'out_channels': 2,
-        "k": 50,
-        'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},  # 分割头，FPN or FPEM_FFM
-        'segmentation_head': {
-            'type': 'DBHead',
-            'args': {'out_channels': 2, 'k': 50}
-        },
+        'backbone': {'type': 'resnet18', 'pretrained': True},
+        'neck': {'type': 'FPN', 'inner_channels': 256},  # 分割头，FPN or FPEM_FFM
+        'head': {'type': 'DBHead', 'out_channels': 2, 'k': 50},
     }
     model = DBModel(model_config=model_config).to(device)
     import time
@@ -79,5 +53,5 @@ if __name__ == '__main__':
     y = model(x)
     print(time.time() - tic)
     print(y.shape)
-    # print(model)
+    print(model.name)
     # torch.save(model.state_dict(), 'PAN.pth')

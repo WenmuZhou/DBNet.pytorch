@@ -3,7 +3,7 @@
 # @Author  : zhoujun
 from torch import nn
 
-from models.modules.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss
+from models.losses.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss
 
 
 class DBLoss(nn.Module):
