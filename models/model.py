@@ -42,7 +42,7 @@ if __name__ == '__main__':
     x = torch.zeros(2, 3, 640, 640).to(device)
 
     model_config = {
-        'backbone': {'type': 'resnet18', 'pretrained': True},
+        'backbone': {'type': 'shufflenet_v2_x1_0', 'pretrained': True},
         'neck': {'type': 'FPN', 'inner_channels': 256},  # 分割头，FPN or FPEM_FFM
         'head': {'type': 'DBHead', 'out_channels': 2, 'k': 50},
     }
