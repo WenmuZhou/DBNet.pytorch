@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:55
 # @Author  : zhoujun
-from .model import DetModel
+from .model import Model
 from .losses import build_loss
 
 __all__ = ['build_loss', 'build_model']
-support_model = ['DetModel']
+support_model = ['Model']
 
 
 def build_model(model_name, **kwargs):

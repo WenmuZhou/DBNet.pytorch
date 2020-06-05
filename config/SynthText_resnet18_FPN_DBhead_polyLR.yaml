@@ -1,7 +1,7 @@
 name: DBNet
 base: ['config/SynthText.yaml']
 arch:
-  type: DetModel
+  type: Model
   backbone:
     type: resnet18
     pretrained: true

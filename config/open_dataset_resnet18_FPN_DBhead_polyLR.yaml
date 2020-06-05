@@ -1,7 +1,7 @@
 name: DBNet
 base: ['config/open_dataset.yaml']
 arch:
-  type: DetModel
+  type: Model
   backbone:
     type: resnet18
     pretrained: true
@@ -57,7 +57,7 @@ dataset:
         load_char_annotation: false
         expand_one_char: false
     loader:
-      batch_size: 2
+      batch_size: 4
       shuffle: true
       pin_memory: true
       num_workers: 6

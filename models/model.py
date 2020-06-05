@@ -10,7 +10,7 @@ from models.neck import build_neck
 from models.head import build_head
 
 
-class DetModel(nn.Module):
+class Model(nn.Module):
     def __init__(self, model_config: dict):
         """
         PANnet
@@ -24,7 +24,7 @@ class DetModel(nn.Module):
         self.backbone = build_backbone(backbone_type, **model_config.backbone)
         self.neck = build_neck(neck_type, in_channels=self.backbone.out_channels, **model_config.neck)
         self.head = build_head(head_type, in_channels=self.neck.out_channels, **model_config.head)
-        self.name = '{}_{}_{}'.format(backbone_type, neck_type, head_type)
+        self.name = f'{backbone_type}_{neck_type}_{head_type}'
 
     def forward(self, x):
         _, _, H, W = x.size()
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         'neck': {'type': 'FPN', 'inner_channels': 256},  # 分割头，FPN or FPEM_FFM
         'head': {'type': 'DBHead', 'out_channels': 2, 'k': 50},
     }
-    model = DBModel(model_config=model_config).to(device)
+    model = Model(model_config=model_config).to(device)
     import time
 
     tic = time.time()

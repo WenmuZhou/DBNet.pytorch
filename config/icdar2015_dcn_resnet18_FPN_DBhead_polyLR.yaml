@@ -1,7 +1,7 @@
 name: DBNet
 base: ['config/icdar2015.yaml']
 arch:
-  type: DetModel
+  type: Model
   backbone:
     type: deformable_resnet18
     pretrained: true
