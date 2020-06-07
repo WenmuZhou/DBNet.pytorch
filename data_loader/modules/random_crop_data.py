@@ -33,7 +33,10 @@ class EastRandomCropData():
         h = int(crop_h * scale)
         w = int(crop_w * scale)
         if self.keep_ratio:
-            padimg = np.zeros((self.size[1], self.size[0], im.shape[2]), im.dtype)
+            if len(im.shape) == 3:
+                padimg = np.zeros((self.size[1], self.size[0], im.shape[2]), im.dtype)
+            else:
+                padimg = np.zeros((self.size[1], self.size[0]), im.dtype)
             padimg[:h, :w] = cv2.resize(im[crop_y:crop_y + crop_h, crop_x:crop_x + crop_w], (w, h))
             img = padimg
         else:
@@ -100,7 +103,7 @@ class EastRandomCropData():
         return xmin, xmax
 
     def crop_area(self, im, text_polys):
-        h, w, _ = im.shape
+        h, w = im.shape[:2]
         h_array = np.zeros(h, dtype=np.int32)
         w_array = np.zeros(w, dtype=np.int32)
         for points in text_polys:

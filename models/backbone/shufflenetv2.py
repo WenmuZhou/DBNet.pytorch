@@ -84,7 +84,7 @@ class InvertedResidual(nn.Module):
 
 
 class ShuffleNetV2(nn.Module):
-    def __init__(self, stages_repeats, stages_out_channels, num_classes=1000):
+    def __init__(self, stages_repeats, stages_out_channels, in_channels=3, **kwargs):
         super(ShuffleNetV2, self).__init__()
         self.out_channels = []
         if len(stages_repeats) != 3:
@@ -93,10 +93,9 @@ class ShuffleNetV2(nn.Module):
             raise ValueError('expected stages_out_channels as list of 5 positive ints')
         self._stage_out_channels = stages_out_channels
 
-        input_channels = 3
         output_channels = self._stage_out_channels[0]
         self.conv1 = nn.Sequential(
-            nn.Conv2d(input_channels, output_channels, 3, 2, 1, bias=False),
+            nn.Conv2d(in_channels, output_channels, 3, 2, 1, bias=False),
             nn.BatchNorm2d(output_channels),
             nn.ReLU(inplace=True),
         )
@@ -138,8 +137,9 @@ def _shufflenetv2(arch, pretrained, progress, *args, **kwargs):
         if model_url is None:
             raise NotImplementedError('pretrained {} is not supported as of now'.format(arch))
         else:
+            assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
             state_dict = load_state_dict_from_url(model_url, progress=progress)
-            model.load_state_dict(state_dict,strict=False)
+            model.load_state_dict(state_dict, strict=False)
 
     return model
 

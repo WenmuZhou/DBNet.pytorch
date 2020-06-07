@@ -43,6 +43,8 @@ def main(config):
 
     criterion = build_loss(config['loss'].pop('type'), **config['loss']).cuda()
 
+    config['arch']['backbone']['in_channels'] = 3 if config['dataset']['train']['dataset']['args']['img_mode'] != 'GRAY' else 1
+    config['arch']['backbone']['pretrained'] = False
     model = build_model(config['arch'].pop('type'), **config['arch'])
 
     post_p = get_post_processing(config['post_processing'])

@@ -73,7 +73,8 @@ class BaseTrainer:
             self.writer = SummaryWriter(self.save_dir)
             try:
                 # add graph
-                dummy_input = torch.zeros(1, 3, 640, 640).to(self.device)
+                in_channels = 3 if config['dataset']['train']['dataset']['args']['img_mode'] != 'GRAY' else 1
+                dummy_input = torch.zeros(1, in_channels, 640, 640).to(self.device)
                 self.writer.add_graph(self.model, dummy_input)
                 torch.cuda.empty_cache()
             except:

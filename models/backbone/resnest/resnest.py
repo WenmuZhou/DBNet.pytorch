@@ -36,6 +36,7 @@ def resnest50(pretrained=False, root='~/.encoding/models', **kwargs):
                    deep_stem=True, stem_width=32, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(torch.hub.load_state_dict_from_url(
             resnest_model_urls['resnest50'], progress=True, check_hash=True))
     return model
@@ -46,6 +47,7 @@ def resnest101(pretrained=False, root='~/.encoding/models', **kwargs):
                    deep_stem=True, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(torch.hub.load_state_dict_from_url(
             resnest_model_urls['resnest101'], progress=True, check_hash=True))
     return model
@@ -56,6 +58,7 @@ def resnest200(pretrained=False, root='~/.encoding/models', **kwargs):
                    deep_stem=True, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(torch.hub.load_state_dict_from_url(
             resnest_model_urls['resnest200'], progress=True, check_hash=True))
     return model
@@ -66,6 +69,7 @@ def resnest269(pretrained=False, root='~/.encoding/models', **kwargs):
                    deep_stem=True, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(torch.hub.load_state_dict_from_url(
             resnest_model_urls['resnest269'], progress=True, check_hash=True))
     return model

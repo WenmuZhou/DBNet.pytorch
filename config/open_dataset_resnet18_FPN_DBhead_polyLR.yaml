@@ -52,12 +52,19 @@ dataset:
     dataset:
       args:
         data_path:
-          - D:\dataset\icdar2015\detection\train.json
+          - E:\zj\dataset\icdar2015 (2)\detection\train.json
+        transforms: # 对图片进行的变换方式
+          - type: ToTensor
+            args: {}
+          - type: Normalize
+            args:
+              mean: [0.485, 0.456, 0.406]
+              std: [0.229, 0.224, 0.225]
         img_mode: RGB
         load_char_annotation: false
         expand_one_char: false
     loader:
-      batch_size: 4
+      batch_size: 2
       shuffle: true
       pin_memory: true
       num_workers: 6
@@ -66,7 +73,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - D:\dataset\icdar2015\detection\test.json
+          - E:\zj\dataset\icdar2015 (2)\detection\test.json
         pre_processes:
           - type: ResizeShortSize
             args:

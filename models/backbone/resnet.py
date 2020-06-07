@@ -129,12 +129,12 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers, dcn=None):
+    def __init__(self, block, layers, in_channels=3, dcn=None):
         self.dcn = dcn
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.out_channels = []
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+        self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
@@ -143,7 +143,6 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dcn=dcn)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dcn=dcn)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dcn=dcn)
-
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -172,7 +171,7 @@ class ResNet(nn.Module):
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, dcn=dcn))
-        self.out_channels.append(planes*block.expansion)
+        self.out_channels.append(planes * block.expansion)
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -196,6 +195,7 @@ def resnet18(pretrained=True, **kwargs):
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         print('load from imagenet')
         model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), strict=False)
     return model
@@ -206,8 +206,9 @@ def deformable_resnet18(pretrained=True, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], dcn=dict(deformable_groups=1))
+    model = ResNet(BasicBlock, [2, 2, 2, 2], dcn=dict(deformable_groups=1), **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         print('load from imagenet')
         model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), strict=False)
     return model
@@ -220,6 +221,7 @@ def resnet34(pretrained=True, **kwargs):
     """
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(model_zoo.load_url(model_urls['resnet34']), strict=False)
     return model
 
@@ -231,6 +233,7 @@ def resnet50(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 
@@ -242,6 +245,7 @@ def deformable_resnet50(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], dcn=dict(deformable_groups=1), **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 
@@ -253,6 +257,7 @@ def resnet101(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(model_zoo.load_url(model_urls['resnet101']), strict=False)
     return model
 
@@ -264,12 +269,15 @@ def resnet152(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     if pretrained:
+        assert kwargs['in_channels'] == 3, 'in_channels must be 3 whem pretrained is True'
         model.load_state_dict(model_zoo.load_url(model_urls['resnet152']), strict=False)
     return model
 
+
 if __name__ == '__main__':
     import torch
-    x = torch.zeros(2,3,640,640)
+
+    x = torch.zeros(2, 3, 640, 640)
     net = deformable_resnet50(pretrained=False)
     y = net(x)
     for u in y:
