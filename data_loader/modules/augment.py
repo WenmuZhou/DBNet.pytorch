@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 from skimage.util import random_noise
 
+
 class RandomNoise:
     def __init__(self, random_rate):
         self.random_rate = random_rate
@@ -183,6 +184,20 @@ class RandomResize:
         return data
 
 
+def resize_image(img, short_size):
+    height, width, _ = img.shape
+    if height < width:
+        new_height = short_size
+        new_width = new_height / height * width
+    else:
+        new_width = short_size
+        new_height = new_width / width * height
+    new_height = int(round(new_height / 32) * 32)
+    new_width = int(round(new_width / 32) * 32)
+    resized_img = cv2.resize(img, (new_width, new_height))
+    return resized_img, (new_width / width, new_height / height)
+
+
 class ResizeShortSize:
     def __init__(self, short_size, resize_text_polys=True):
         """
@@ -206,9 +221,13 @@ class ResizeShortSize:
         if short_edge < self.short_size:
             # 保证短边 >= short_size
             scale = self.short_size / short_edge
+            scale = (scale, scale)
             im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
+            # im, scale = resize_image(im, self.short_size)
             if self.resize_text_polys:
-                text_polys *= scale
+                # text_polys *= scale
+                text_polys[:, 0] *= scale[0]
+                text_polys[:, 1] *= scale[1]
 
         data['img'] = im
         data['text_polys'] = text_polys
