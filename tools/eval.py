@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 
 class EVAL():
     def __init__(self, model_path, gpu_id=0):
-        from models import get_model
+        from models import build_model
         from data_loader import get_dataloader
         from post_processing import get_post_processing
         from utils import get_metric
@@ -28,7 +28,7 @@ class EVAL():
 
         self.validate_loader = get_dataloader(config['dataset']['validate'], config['distributed'])
 
-        self.model = get_model(config['arch'])
+        self.model = build_model(config['arch'].pop('type'), **config['arch'])
         self.model.load_state_dict(checkpoint['state_dict'])
         self.model.to(self.device)
 

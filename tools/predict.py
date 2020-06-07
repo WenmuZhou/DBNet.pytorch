@@ -13,7 +13,7 @@ import cv2
 import torch
 
 from data_loader import get_transforms
-from models import get_model
+from models import build_model
 from post_processing import get_post_processing
 
 
@@ -49,7 +49,7 @@ class Pytorch_model:
 
         config = checkpoint['config']
         config['arch']['args']['pretrained'] = False
-        self.model = get_model(config['arch'])
+        self.model = build_model(config['arch'].pop('type'), **config['arch'])
         self.post_process = get_post_processing(config['post_processing'])
         self.post_process.box_thresh = post_p_thre
         self.img_mode = config['dataset']['train']['dataset']['args']['img_mode']
