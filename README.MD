@@ -4,9 +4,10 @@
 
 [中文解读](https://zhuanlan.zhihu.com/p/94677957)
 
-
 ![network](imgs/paper/db.jpg)
 
+## update 
+2020-06-07: 添加灰度图训练，训练灰度图时需要在配置里移除`dataset.args.transforms.Normalize`
 
 ## Install Using Conda
 ```
