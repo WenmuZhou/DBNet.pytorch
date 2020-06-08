@@ -19,12 +19,15 @@ class EVAL():
         from data_loader import get_dataloader
         from post_processing import get_post_processing
         from utils import get_metric
-        self.device = torch.device("cuda:%s" % gpu_id)
-        if gpu_id is not None:
+        self.gpu_id = gpu_id
+        if self.gpu_id is not None and isinstance(self.gpu_id, int) and torch.cuda.is_available():
+            self.device = torch.device("cuda:%s" % self.gpu_id)
             torch.backends.cudnn.benchmark = True
+        else:
+            self.device = torch.device("cpu")
         checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
         config = checkpoint['config']
-        config['arch']['args']['pretrained'] = False
+        config['arch']['backbone']['pretrained'] = False
 
         self.validate_loader = get_dataloader(config['dataset']['validate'], config['distributed'])
 
@@ -62,7 +65,7 @@ class EVAL():
 
 def init_args():
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
-    parser.add_argument('--model_path', required=True, type=str)
+    parser.add_argument('--model_path', required=False,default='output/DBNet_resnet18_FPN_DBHead/checkpoint/1.pth', type=str)
     args = parser.parse_args()
     return args
 

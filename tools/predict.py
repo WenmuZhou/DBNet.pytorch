@@ -48,7 +48,7 @@ class Pytorch_model:
         checkpoint = torch.load(model_path, map_location=self.device)
 
         config = checkpoint['config']
-        config['arch']['args']['pretrained'] = False
+        config['arch']['backbone']['pretrained'] = False
         self.model = build_model(config['arch'].pop('type'), **config['arch'])
         self.post_process = get_post_processing(config['post_processing'])
         self.post_process.box_thresh = post_p_thre

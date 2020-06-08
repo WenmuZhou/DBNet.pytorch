@@ -45,7 +45,7 @@ def main(config):
 
     config['arch']['backbone']['in_channels'] = 3 if config['dataset']['train']['dataset']['args']['img_mode'] != 'GRAY' else 1
     config['arch']['backbone']['pretrained'] = False
-    model = build_model(config['arch'].pop('type'), **config['arch'])
+    model = build_model(config['arch']['type'], **config['arch'])
 
     post_p = get_post_processing(config['post_processing'])
     metric = get_metric(config['metric'])
