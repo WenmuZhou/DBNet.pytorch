@@ -91,7 +91,7 @@ class DetDataset(BaseDataSet):
                             texts.append(char_annotation['char'])
                             illegibility_list.append(char_annotation['illegibility'])
                             language_list.append(char_annotation['language'])
-                data_list.append({'img_path': img_path, 'img_name': gt['img_name'], 'text_polys': np.float32(polygons),
+                data_list.append({'img_path': img_path, 'img_name': gt['img_name'], 'text_polys': np.array(polygons),
                                   'texts': texts, 'ignore_tags': illegibility_list})
         return data_list
 
