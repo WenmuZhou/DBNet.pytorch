@@ -221,8 +221,8 @@ class ResizeShortSize:
         if short_edge < self.short_size:
             # 保证短边 >= short_size
             scale = self.short_size / short_edge
-            scale = (scale, scale)
             im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
+            scale = (scale, scale)
             # im, scale = resize_image(im, self.short_size)
             if self.resize_text_polys:
                 # text_polys *= scale
