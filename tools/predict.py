@@ -105,6 +105,11 @@ class Pytorch_model:
         return preds[0, 0, :, :].detach().cpu().numpy(), box_list, score_list, t
 
 
+def save_depoly(model, input, save_path):
+    traced_script_model = torch.jit.trace(model, input)
+    traced_script_model.save(save_path)
+
+
 def init_args():
     import argparse
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
