@@ -3,9 +3,12 @@
 # @Author  : zhoujun
 import os
 import sys
-
-project = 'DBNet.pytorch'  # 工作项目根目录
-sys.path.append(os.getcwd().split(project)[0] + project)
+import pathlib
+__dir__ = pathlib.Path(os.path.abspath(__file__))
+sys.path.append(__dir__)
+sys.path.append(str(__dir__.parent.parent))
+# project = 'DBNet.pytorch'  # 工作项目根目录
+# sys.path.append(os.getcwd().split(project)[0] + project)
 
 import argparse
 import time
