@@ -16,7 +16,7 @@ class Trainer(BaseTrainer):
         super(Trainer, self).__init__(config, model, criterion)
         self.show_images_iter = self.config['trainer']['show_images_iter']
         self.train_loader = train_loader
-        if validate_loader is None:
+        if validate_loader is not None:
             assert post_process is not None and metric_cls is not None
         self.validate_loader = validate_loader
         self.post_process = post_process

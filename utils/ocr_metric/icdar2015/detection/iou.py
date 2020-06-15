@@ -235,16 +235,16 @@ class DetectionIoUEvaluator(object):
 
 if __name__ == '__main__':
     evaluator = DetectionIoUEvaluator()
-    gts = [[{
-        'points': [(0, 0), (1, 0), (1, 1), (0, 1)],
+    preds = [[{
+        'points': [(0.1, 0.1), (0.5, 0), (0.5, 1), (0, 1)],
         'text': 1234,
         'ignore': False,
     }, {
-        'points': [(2, 2), (3, 2), (3, 3), (2, 3)],
+        'points': [(0.5, 0.1), (1, 0), (1, 1), (0.5, 1)],
         'text': 5678,
         'ignore': False,
     }]]
-    preds = [[{
+    gts = [[{
         'points': [(0.1, 0.1), (1, 0), (1, 1), (0, 1)],
         'text': 123,
         'ignore': False,
