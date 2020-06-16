@@ -38,7 +38,7 @@ def get_transforms(transforms_config):
     return tr_list
 
 
-class ICDARCollectFN():
+class ICDARCollectFN:
     def __init__(self, *args, **kwargs):
         pass
 
