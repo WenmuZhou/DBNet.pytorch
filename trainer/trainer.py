@@ -148,8 +148,10 @@ class Trainer(BaseTrainer):
             self.epoch_result['epoch'], self.epochs, self.epoch_result['train_loss'], self.epoch_result['time'],
             self.epoch_result['lr']))
         net_save_path = '{}/model_latest.pth'.format(self.checkpoint_dir)
+        net_save_path_best = '{}/model_best.pth'.format(self.checkpoint_dir)
 
         if self.config['local_rank'] == 0:
+            self._save_checkpoint(self.epoch_result['epoch'], net_save_path)
             save_best = False
             if self.validate_loader is not None and self.metric_cls is not None:  # 使用f1作为最优模型指标
                 recall, precision, hmean = self._eval(self.epoch_result['epoch'])
@@ -176,7 +178,13 @@ class Trainer(BaseTrainer):
             for k, v in self.metrics.items():
                 best_str += '{}: {:.6f}, '.format(k, v)
             self.logger_info(best_str)
-            self._save_checkpoint(self.epoch_result['epoch'], net_save_path, save_best)
+            if save_best:
+                import shutil
+                shutil.copy(net_save_path, net_save_path_best)
+                self.logger_info("Saving current best: {}".format(net_save_path_best))
+            else:
+                self.logger_info("Saving checkpoint: {}".format(net_save_path))
+
 
     def _on_train_finish(self):
         for k, v in self.metrics.items():

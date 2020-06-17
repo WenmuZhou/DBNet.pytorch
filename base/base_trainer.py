@@ -131,7 +131,7 @@ class BaseTrainer:
     def _on_train_finish(self):
         raise NotImplementedError
 
-    def _save_checkpoint(self, epoch, file_name, save_best=False):
+    def _save_checkpoint(self, epoch, file_name):
         """
         Saving checkpoints
 
@@ -151,11 +151,6 @@ class BaseTrainer:
         }
         filename = os.path.join(self.checkpoint_dir, file_name)
         torch.save(state, filename)
-        if save_best:
-            shutil.copy(filename, os.path.join(self.checkpoint_dir, 'model_best.pth'))
-            self.logger_info("Saving current best: {}".format(os.path.join(self.checkpoint_dir, 'model_best.pth')))
-        else:
-            self.logger_info("Saving checkpoint: {}".format(filename))
 
     def _load_checkpoint(self, checkpoint_path, resume):
         """
