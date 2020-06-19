@@ -41,10 +41,10 @@ def main(config):
     else:
         validate_loader = None
 
-    criterion = build_loss(config['loss'].pop('type'), **config['loss']).cuda()
+    criterion = build_loss(config['loss']).cuda()
 
     config['arch']['backbone']['in_channels'] = 3 if config['dataset']['train']['dataset']['args']['img_mode'] != 'GRAY' else 1
-    model = build_model(config['arch']['type'], **config['arch'])
+    model = build_model(config['arch'])
 
     post_p = get_post_processing(config['post_processing'])
     metric = get_metric(config['metric'])
