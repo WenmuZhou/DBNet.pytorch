@@ -52,7 +52,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - E:\zj\dataset\icdar2015\train\train.txt
+          - ./datasets/train.txt
         img_mode: RGB
     loader:
       batch_size: 1
@@ -64,7 +64,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - E:\zj\dataset\icdar2015\test\test.txt
+          - ./datasets/test.txt
         pre_processes:
           - type: ResizeShortSize
             args:

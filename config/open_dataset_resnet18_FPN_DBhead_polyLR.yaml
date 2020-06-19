@@ -52,7 +52,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - D:\dataset\icdar2015\detection\train.json
+          - ./datasets/train.json
         transforms: # 对图片进行的变换方式
           - type: ToTensor
             args: {}
@@ -73,7 +73,7 @@ dataset:
     dataset:
       args:
         data_path:
-          - D:\dataset\icdar2015\detection\test.json
+          - ./datasets/test.json
         pre_processes:
           - type: ResizeShortSize
             args:

@@ -116,7 +116,7 @@ def save_depoly(model, input, save_path):
 def init_args():
     import argparse
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
-    parser.add_argument('--model_path', default=r'D:\code\OCR\DBNet.pytorch\model_best.pth', type=str)
+    parser.add_argument('--model_path', default=r'model_best.pth', type=str)
     parser.add_argument('--input_folder', default='./test/input', type=str, help='img path for predict')
     parser.add_argument('--output_folder', default='./test/output', type=str, help='img path for output')
     parser.add_argument('--thre', default=0.3, help='the thresh of post_processing')

@@ -51,7 +51,7 @@ dataset:
   train:
     dataset:
       args:
-        data_path: E:\zj\dataset\SynthText\SynthText
+        data_path: ./datasets/SynthText
         img_mode: RGB
     loader:
       batch_size: 2

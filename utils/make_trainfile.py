@@ -5,7 +5,7 @@ import os
 import glob
 import pathlib
 
-data_path = r'E:\zj\dataset\icdar2015\test'
+data_path = r'test'
 # data_path/img 存放图片
 # data_path/gt 存放标签文件
 
