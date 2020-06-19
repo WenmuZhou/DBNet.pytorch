@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2020/6/5 11:34
 # @Author  : zhoujun
-__all__ = ['build_neck']
 from .FPN import FPN
 from .FPEM_FFM import FPEM_FFM
 
+__all__ = ['build_neck']
 support_neck = ['FPN', 'FPEM_FFM']
 
 

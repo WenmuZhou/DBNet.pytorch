@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2020/6/5 11:35
 # @Author  : zhoujun
-__all__ = ['build_head']
 from .DBHead import DBHead
 from .ConvHead import ConvHead
 
+__all__ = ['build_head']
 support_head = ['ConvHead', 'DBHead']
 
 

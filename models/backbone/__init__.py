@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/23 21:54
 # @Author  : zhoujun
-__all__ = ['build_backbone']
 
 from .resnet import *
 from .resnest import *
 from .shufflenetv2 import *
 from .MobilenetV3 import MobileNetV3
+
+__all__ = ['build_backbone']
 
 support_backbone = ['resnet18', 'deformable_resnet18', 'deformable_resnet50',
                     'resnet50', 'resnet34', 'resnet101', 'resnet152',
