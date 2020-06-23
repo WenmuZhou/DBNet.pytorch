@@ -6,7 +6,7 @@ import os
 import sys
 import pathlib
 __dir__ = pathlib.Path(os.path.abspath(__file__))
-sys.path.append(__dir__)
+sys.path.append(str(__dir__))
 sys.path.append(str(__dir__.parent.parent))
 
 # project = 'DBNet.pytorch'  # 工作项目根目录
