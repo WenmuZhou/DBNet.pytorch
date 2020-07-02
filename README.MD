@@ -110,7 +110,7 @@ only train on ICDAR2015 dataset
 | ImageNet-resnet18-FPN-DBHead  |736 |1e-3| 87.03 | 75.06 | 80.6 | 43 |
 | ImageNet-Defrom-Resnet18-FPN-DBHead  |736 |1e-3| 88.61 | 73.84 | 80.56 | 36 |
 | ImageNet-resnet50-FPN-DBHead  |736 |1e-3| 88.06 | 77.14 | 82.24 | 27 |
-| ImageNet-resnest50-FPN-DBHead  |736 |1e-3| 89.56 | 77.38 | 83.03 | 27 |
+| ImageNet-resnest50-FPN-DBHead  |736 |1e-3| 88.18 | 76.27 | 81.78 | 27 |
 
 
 ### examples
