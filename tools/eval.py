@@ -34,7 +34,7 @@ class EVAL():
 
         self.validate_loader = get_dataloader(config['dataset']['validate'], config['distributed'])
 
-        self.model = build_model(config['arch'].pop('type'), **config['arch'])
+        self.model = build_model(config['arch'])
         self.model.load_state_dict(checkpoint['state_dict'])
         self.model.to(self.device)
 

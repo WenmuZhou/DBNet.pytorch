@@ -52,7 +52,7 @@ class Pytorch_model:
 
         config = checkpoint['config']
         config['arch']['backbone']['pretrained'] = False
-        self.model = build_model(config['arch'].pop('type'), **config['arch'])
+        self.model = build_model(config['arch'])
         self.post_process = get_post_processing(config['post_processing'])
         self.post_process.box_thresh = post_p_thre
         self.img_mode = config['dataset']['train']['dataset']['args']['img_mode']
@@ -119,7 +119,7 @@ def init_args():
     parser.add_argument('--model_path', default=r'model_best.pth', type=str)
     parser.add_argument('--input_folder', default='./test/input', type=str, help='img path for predict')
     parser.add_argument('--output_folder', default='./test/output', type=str, help='img path for output')
-    parser.add_argument('--thre', default=0.3, help='the thresh of post_processing')
+    parser.add_argument('--thre', default=0.3,type=float, help='the thresh of post_processing')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
     parser.add_argument('--save_resut', action='store_true', help='save box and score to txt file')
