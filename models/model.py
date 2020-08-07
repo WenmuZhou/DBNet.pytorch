@@ -31,7 +31,9 @@ class Model(nn.Module):
         backbone_out = self.backbone(x)
         neck_out = self.neck(backbone_out)
         y = self.head(neck_out)
-        y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
+        # y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
+        # 有点区别，就是F中的是一个函数，在nn.sequential()中，不能作为一个层，而nn.upsample中的则可以
+        y = F.interpolate(y, size=(H, W))  # 使用最近邻训练的可以用TRTAPI实现
         return y
 
 

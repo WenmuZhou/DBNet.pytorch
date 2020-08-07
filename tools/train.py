@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import argparse
 import os
-
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import anyconfig
 
 
