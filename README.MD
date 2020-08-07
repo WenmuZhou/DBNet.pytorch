@@ -41,6 +41,6 @@ models/neck/FPN.py
 
 ## TensorRT版本
 
-[地址]: https://github.com/BaofengZan/DBNet-TensorRT
+https://github.com/BaofengZan/DBNet-TensorRT
 
  
