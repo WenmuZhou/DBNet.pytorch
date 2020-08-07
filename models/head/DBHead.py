@@ -13,7 +13,6 @@ class DBHead(nn.Module):
             nn.Conv2d(in_channels, in_channels // 4, 3, padding=1),
             nn.BatchNorm2d(in_channels // 4),
             nn.ReLU(inplace=True),
-            # nn.Upsample(scale_factor=2, mode='nearest'),
             # ConvTranspose2d (self, in_channels, out_channels, kernel_size, stride=1,
             #                  padding=0, output_padding=0, groups=1, bias=True,
             #                  dilation=1, padding_mode='zeros'):
