@@ -5,6 +5,7 @@
 import os
 import sys
 import pathlib
+import struct
 __dir__ = pathlib.Path(os.path.abspath(__file__))
 sys.path.append(str(__dir__))
 sys.path.append(str(__dir__.parent.parent))
@@ -35,7 +36,7 @@ def resize_image(img, short_size):
 
 
 class Pytorch_model:
-    def __init__(self, model_path, post_p_thre=0.7, gpu_id=None):
+    def __init__(self, model_path, post_p_thre=0.7, gpu_id=None, save_wts=False):
         '''
         初始化pytorch模型
         :param model_path: 模型地址(可以是模型的参数或者参数和计算图一起保存的文件)
@@ -59,6 +60,19 @@ class Pytorch_model:
         self.model.load_state_dict(checkpoint['state_dict'])
         self.model.to(self.device)
         self.model.eval()
+        # 保存wts
+        # save wts
+        if save_wts:
+            f = open('DBNet.wts', 'w')
+            f.write('{}\n'.format(len(self.model.state_dict().keys())))
+            for k, v in self.model.state_dict().items():
+                vr = v.reshape(-1).cpu().numpy()
+                f.write('{} {} '.format(k, len(vr)))
+                for vv in vr:
+                    f.write(' ')
+                    f.write(struct.pack('>f', float(vv)).hex())
+                f.write('\n')
+
 
         self.transform = []
         for t in config['dataset']['train']['dataset']['args']['transforms']:
@@ -75,10 +89,12 @@ class Pytorch_model:
         '''
         assert os.path.exists(img_path), 'file is not exists'
         img = cv2.imread(img_path, 1 if self.img_mode != 'GRAY' else 0)
+        #img = cv2.imread("E:\\Datasets\\ICDAR2015\\test\\img\\img_10.jpg", 1 if self.img_mode != 'GRAY' else 0)
         if self.img_mode == 'RGB':
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
-        img = resize_image(img, short_size)
+        #img = resize_image(img, short_size)
+        img = cv2.resize(img, (640, 640))
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = self.transform(img)
         tensor = tensor.unsqueeze_(0)
@@ -88,8 +104,10 @@ class Pytorch_model:
         with torch.no_grad():
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
-            start = time.time()
+            start = time.clock()
             preds = self.model(tensor)
+            t = time.clock() - start
+            print("infer time: (ms) ", t*1000)
             if str(self.device).__contains__('cuda'):
                 torch.cuda.synchronize(self.device)
             box_list, score_list = self.post_process(batch, preds, is_output_polygon=is_output_polygon)
@@ -107,6 +125,28 @@ class Pytorch_model:
             t = time.time() - start
         return preds[0, 0, :, :].detach().cpu().numpy(), box_list, score_list, t
 
+    def export_onnx(self):
+        img = torch.zeros((1, 3, 640, 640)).cuda()  # image size(1,3,320,192) iDetection
+        # tensor = self.transform(img)
+        # tensor = tensor.unsqueeze_(0)
+        #tensor = img.to(self.device)
+        y = self.model(img)
+        try:
+            import onnx
+
+            print('\nStarting ONNX export with onnx %s...' % onnx.__version__)
+            f = ("mode.onnx") # filename
+            #self.model.fuse()  # only for ONNX
+            torch.onnx.export(self.model, img, f, verbose=False, opset_version=12, input_names=['images'],
+                              output_names=['classes', 'boxes'] if y is None else ['output'])
+
+            # Checks
+            onnx_model = onnx.load(f)  # load onnx model
+            onnx.checker.check_model(onnx_model)  # check onnx model
+            print(onnx.helper.printable_graph(onnx_model.graph))  # print a human readable model
+            print('ONNX export success, saved as %s' % f)
+        except Exception as e:
+            print('ONNX export failure: %s' % e)
 
 def save_depoly(model, input, save_path):
     traced_script_model = torch.jit.trace(model, input)
@@ -116,13 +156,15 @@ def save_depoly(model, input, save_path):
 def init_args():
     import argparse
     parser = argparse.ArgumentParser(description='DBNet.pytorch')
-    parser.add_argument('--model_path', default=r'model_best.pth', type=str)
-    parser.add_argument('--input_folder', default='./test/input', type=str, help='img path for predict')
+    parser.add_argument('--model_path', default=r'E:\LearningCodes\DBNET\DBNet.pytorch\model_best.pth', type=str)
+    parser.add_argument('--input_folder', default=r'E:\Datasets\ICDAR2015\test\img', type=str, help='img path for predict')
     parser.add_argument('--output_folder', default='./test/output', type=str, help='img path for output')
     parser.add_argument('--thre', default=0.3,type=float, help='the thresh of post_processing')
     parser.add_argument('--polygon', action='store_true', help='output polygon or box')
     parser.add_argument('--show', action='store_true', help='show result')
     parser.add_argument('--save_resut', action='store_true', help='save box and score to txt file')
+    parser.add_argument('--save_wts', default=False, help='save box and score to txt file')
+    parser.add_argument('--onnx', default=False, help='save box and score to txt file')
     args = parser.parse_args()
     return args
 
@@ -137,9 +179,15 @@ if __name__ == '__main__':
     print(args)
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     # 初始化网络
-    model = Pytorch_model(args.model_path, post_p_thre=args.thre, gpu_id=0)
+    model = Pytorch_model(args.model_path, post_p_thre=args.thre, gpu_id=0, save_wts=args.save_wts)
+    if(args.onnx):
+        model.export_onnx()
+    if(args.save_wts):
+        exit(0)
+
     img_folder = pathlib.Path(args.input_folder)
     for img_path in tqdm(get_file_list(args.input_folder, p_postfix=['.jpg'])):
+
         preds, boxes_list, score_list, t = model.predict(img_path, is_output_polygon=args.polygon)
         img = draw_bbox(cv2.imread(img_path)[:, :, ::-1], boxes_list)
         if args.show:

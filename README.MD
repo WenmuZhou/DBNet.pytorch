@@ -1,128 +1,46 @@
 # Real-time Scene Text Detection with Differentiable Binarization
 
-**note**: some code is inherited from [MhLiao/DB](https://github.com/MhLiao/DB)
+**note**: 原始版本 [DBNet.pytorch](https://github.com/WenmuZhou/DBNet.pytorch)
 
 [中文解读](https://zhuanlan.zhihu.com/p/94677957)
 
 ![network](imgs/paper/db.jpg)
 
-## update 
-2020-06-07: 添加灰度图训练，训练灰度图时需要在配置里移除`dataset.args.transforms.Normalize`
+## 安装环境
 
-## Install Using Conda
-```
-conda env create -f environment.yml
-git clone https://github.com/WenmuZhou/DBNet.pytorch.git
-cd DBNet.pytorch/
-```
+请参考原始版本的[Readme](https://github.com/WenmuZhou/DBNet.pytorch/blob/master/README.MD)
 
-or
-## Install Manually 
-```bash
-conda create -n dbnet python=3.6
-conda activate dbnet
 
-conda install ipython pip
 
-# python dependencies
-pip install -r requirement.txt
+## 修改之处
 
-# install PyTorch with cuda-10.1
-# Note that you can change the cudatoolkit version to the version you want.
-conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
+本repo为了可以使用tensorRT加速，将反卷积操作全部改为upsample。比如
 
-# clone repo
-git clone https://github.com/WenmuZhou/DBNet.pytorch.git
-cd DBNet.pytorch/
-
+```python
+ # 原始版本
+nn.ConvTranspose2d(in_channels // 4, in_channels // 4, 2, 2), # 上采样两倍
+# 修改版本 
+nn.Upsample(scale_factor=2, mode='nearest'),
 ```
 
-## Requirements
-* pytorch 1.4+
-* torchvision 0.5+
-* gcc 4.9+
+更多的修改，请看代码：
 
-## Download
-
-TBD
-
-## Data Preparation
-
-Training data: prepare a text `train.txt` in the following format, use '\t' as a separator
 ```
-./datasets/train/img/001.jpg	./datasets/train/gt/001.txt
+models/head/DBHead.py 
+models/model.py 
+models/neck/FPN.py
 ```
 
-Validation data: prepare a text `test.txt` in the following format, use '\t' as a separator
-```
-./datasets/test/img/001.jpg	./datasets/test/gt/001.txt
-```
-- Store images in the `img` folder
-- Store groundtruth in the `gt` folder
+## 模型
 
-The groundtruth can be `.txt` files, with the following format:
-```
-x1, y1, x2, y2, x3, y3, x4, y4, annotation
-```
+修改后代码训练的模型地址：[渣云：访问密码 myj4 ](https://pan.baidu.com/s/10Ff-0AJkkpC9jGWdNSsN6g)
 
+目前没有训练完成，相比原版模型（1200epoch），只训练了500epoch。精度：90.0  召回率：68.2。 
 
-## Train
-1. config the `dataset['train']['dataset'['data_path']'`,`dataset['validate']['dataset'['data_path']`in [config/icdar2015_resnet18_fpn_DBhead_polyLR.yaml](cconfig/icdar2015_resnet18_fpn_DBhead_polyLR.yaml)
-* . single gpu train
-```bash
-bash singlel_gpu_train.sh
-```
-* . Multi-gpu training
-```bash
-bash multi_gpu_train.sh
-```
-## Test
+可以自己去训练。
 
-[eval.py](tools/eval.py) is used to test model on test dataset
+## TensorRT版本
 
-1. config `model_path` in [eval.sh](eval.sh)
-2. use following script to test
-```bash
-bash eval.sh
-```
+https://github.com/BaofengZan/DBNet-TensorRT
 
-## Predict 
-[predict.py](tools/predict.py) Can be used to inference on all images in a folder
-1. config `model_path`,`input_folder`,`output_folder` in [predict.sh](predict.sh)
-2. use following script to predict
-```
-bash predict.sh
-```
-You can change the `model_path` in the `predict.sh` file to your model location. 
-
-tips: if result is not good, you can change `thre` in [predict.sh](predict.sh) 
-    
-The project is still under development.
-
-<h2 id="Performance">Performance</h2>
-
-### [ICDAR 2015](http://rrc.cvc.uab.es/?ch=4)
-only train on ICDAR2015 dataset
-
-| Method                   | image size (short size) |learning rate | Precision (%) | Recall (%) | F-measure (%) | FPS |
-|:--------------------------:|:-------:|:--------:|:--------:|:------------:|:---------------:|:-----:|
-| SynthText-Defrom-ResNet-18(paper)  | 736 |0.007 | 86.8 | 78.4 | 82.3 | 48 |
-| ImageNet-resnet18-FPN-DBHead  |736 |1e-3| 87.03 | 75.06 | 80.6 | 43 |
-| ImageNet-Defrom-Resnet18-FPN-DBHead  |736 |1e-3| 88.61 | 73.84 | 80.56 | 36 |
-| ImageNet-resnet50-FPN-DBHead  |736 |1e-3| 88.06 | 77.14 | 82.24 | 27 |
-| ImageNet-resnest50-FPN-DBHead  |736 |1e-3| 88.18 | 76.27 | 81.78 | 27 |
-
-
-### examples
-TBD
-
-
-### todo
-- [x] mutil gpu training
-
-### reference
-1. https://arxiv.org/pdf/1911.08947.pdf
-2. https://github.com/WenmuZhou/PANet.pytorch
-3. https://github.com/MhLiao/DB
-
-**If this repository helps you，please star it. Thanks.**
+ 

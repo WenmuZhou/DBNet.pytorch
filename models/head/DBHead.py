@@ -3,19 +3,26 @@
 # @Author  : zhoujun
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 class DBHead(nn.Module):
-    def __init__(self, in_channels, out_channels, k = 50):
+    def __init__(self, in_channels, out_channels, k = 50):  # debug ==> 256 2 k=50
         super().__init__()
         self.k = k
         self.binarize = nn.Sequential(
             nn.Conv2d(in_channels, in_channels // 4, 3, padding=1),
             nn.BatchNorm2d(in_channels // 4),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(in_channels // 4, in_channels // 4, 2, 2),
+            # ConvTranspose2d (self, in_channels, out_channels, kernel_size, stride=1,
+            #                  padding=0, output_padding=0, groups=1, bias=True,
+            #                  dilation=1, padding_mode='zeros'):
+            #nn.ConvTranspose2d(in_channels // 4, in_channels // 4, 2, 2), # 上采样两倍
+            nn.Upsample(scale_factor=2, mode='nearest'),
             nn.BatchNorm2d(in_channels // 4),
             nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(in_channels // 4, 1, 2, 2),
+            #nn.ConvTranspose2d(in_channels // 4, 1, 2, 2),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Conv2d(in_channels//4, 1, 3, padding=1), # 311 大小不变
             nn.Sigmoid())
         self.binarize.apply(self.weights_init)
 
@@ -41,9 +48,10 @@ class DBHead(nn.Module):
             m.bias.data.fill_(1e-4)
 
     def _init_thresh(self, inner_channels, serial=False, smooth=False, bias=False):
-        in_channels = inner_channels
+        in_channels = inner_channels # 256
         if serial:
             in_channels += 1
+
         self.thresh = nn.Sequential(
             nn.Conv2d(in_channels, inner_channels // 4, 3, padding=1, bias=bias),
             nn.BatchNorm2d(inner_channels // 4),
@@ -67,7 +75,9 @@ class DBHead(nn.Module):
                 module_list.append(nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=1, bias=True))
             return nn.Sequential(module_list)
         else:
-            return nn.ConvTranspose2d(in_channels, out_channels, 2, 2)
+            #return nn.ConvTranspose2d(in_channels, out_channels, 2, 2)
+            return nn.Sequential(nn.Upsample(scale_factor=2, mode='nearest'),
+                    nn.Conv2d(in_channels, out_channels, 3, 1, 1))
 
     def step_function(self, x, y):
         return torch.reciprocal(1 + torch.exp(-self.k * (x - y)))
